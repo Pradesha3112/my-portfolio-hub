@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { isAdmin, logout } from "@/lib/auth";
 import { Menu, X, Shield, LogOut, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const navLinks = [
   { to: "/", label: "Home" },
@@ -43,6 +44,7 @@ export default function Navbar() {
               <Download className="h-4 w-4" /> Resume
             </Button>
           </a>
+          <ThemeToggle />
           {admin && (
             <>
               <Link to="/dashboard">
