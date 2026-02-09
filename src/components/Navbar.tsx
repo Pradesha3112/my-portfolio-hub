@@ -12,6 +12,7 @@ const navLinks = [
   { to: "/projects", label: "Projects" },
   { to: "/certifications", label: "Certifications" },
   { to: "/skills", label: "Skills" },
+  { to: "/contact", label: "Contact" },
 ];
 
 export default function Navbar() {
