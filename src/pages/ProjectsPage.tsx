@@ -1,20 +1,22 @@
 import { useState } from "react";
-import { getPortfolioData } from "@/lib/portfolioData";
+import { isAdmin } from "@/lib/auth";
 import AnimatedSection from "@/components/AnimatedSection";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { ExternalLink, Star, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ExternalLink, Star, Search, Pencil, Plus } from "lucide-react";
+import { useInlineData, EditProjectDialog, DeleteButton, AdminActions, AddButton } from "@/components/InlineEdit";
 
 export default function ProjectsPage() {
-  const d = getPortfolioData();
+  const { data: d, save } = useInlineData();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<string | null>(null);
+  const admin = isAdmin();
 
   const allTech = [...new Set(d.projects.flatMap((p) => p.techStack))];
 
   const filtered = d.projects.filter((p) => {
-    const matchesSearch =
-      !search || p.title.toLowerCase().includes(search.toLowerCase()) || p.description.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = !search || p.title.toLowerCase().includes(search.toLowerCase()) || p.description.toLowerCase().includes(search.toLowerCase());
     const matchesFilter = !filter || p.techStack.includes(filter);
     return matchesSearch && matchesFilter;
   });
@@ -31,30 +33,12 @@ export default function ProjectsPage() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center mb-8">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search projects..."
-                className="pl-9"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+              <Input placeholder="Search projects..." className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
             <div className="flex flex-wrap gap-2">
-              <Badge
-                variant={filter === null ? "default" : "outline"}
-                className="cursor-pointer"
-                onClick={() => setFilter(null)}
-              >
-                All
-              </Badge>
+              <Badge variant={filter === null ? "default" : "outline"} className="cursor-pointer" onClick={() => setFilter(null)}>All</Badge>
               {allTech.map((t) => (
-                <Badge
-                  key={t}
-                  variant={filter === t ? "default" : "outline"}
-                  className="cursor-pointer"
-                  onClick={() => setFilter(t === filter ? null : t)}
-                >
-                  {t}
-                </Badge>
+                <Badge key={t} variant={filter === t ? "default" : "outline"} className="cursor-pointer" onClick={() => setFilter(t === filter ? null : t)}>{t}</Badge>
               ))}
             </div>
           </div>
@@ -79,13 +63,26 @@ export default function ProjectsPage() {
                     View Project <ExternalLink className="h-3 w-3" />
                   </a>
                 )}
+                <AdminActions>
+                  <EditProjectDialog
+                    item={p}
+                    onSave={(updated) => save((d) => ({ ...d, projects: d.projects.map((x) => x.id === updated.id ? updated : x) }))}
+                    trigger={<Button variant="ghost" size="sm" className="gap-1"><Pencil className="h-3 w-3" /> Edit</Button>}
+                  />
+                  <DeleteButton label="project" onDelete={() => save((d) => ({ ...d, projects: d.projects.filter((x) => x.id !== p.id) }))} />
+                </AdminActions>
               </div>
             </AnimatedSection>
           ))}
         </div>
-        {filtered.length === 0 && (
-          <p className="text-center text-muted-foreground mt-8">No projects found.</p>
-        )}
+        {filtered.length === 0 && <p className="text-center text-muted-foreground mt-8">No projects found.</p>}
+
+        <AddButton>
+          <EditProjectDialog
+            onSave={(item) => save((d) => ({ ...d, projects: [...d.projects, item] }))}
+            trigger={<Button variant="outline" className="gap-1"><Plus className="h-4 w-4" /> Add Project</Button>}
+          />
+        </AddButton>
       </div>
     </main>
   );

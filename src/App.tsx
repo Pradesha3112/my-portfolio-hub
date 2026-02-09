@@ -5,12 +5,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import PageTransition from "@/components/PageTransition";
 import Index from "./pages/Index";
 import EducationPage from "./pages/EducationPage";
 import ExperiencePage from "./pages/ExperiencePage";
 import ProjectsPage from "./pages/ProjectsPage";
 import CertificationsPage from "./pages/CertificationsPage";
 import SkillsPage from "./pages/SkillsPage";
+import ContactPage from "./pages/ContactPage";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import NotFound from "./pages/NotFound";
@@ -24,17 +26,20 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Navbar />
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/education" element={<EducationPage />} />
-          <Route path="/experience" element={<ExperiencePage />} />
-          <Route path="/projects" element={<ProjectsPage />} />
-          <Route path="/certifications" element={<CertificationsPage />} />
-          <Route path="/skills" element={<SkillsPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <PageTransition>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/education" element={<EducationPage />} />
+            <Route path="/experience" element={<ExperiencePage />} />
+            <Route path="/projects" element={<ProjectsPage />} />
+            <Route path="/certifications" element={<CertificationsPage />} />
+            <Route path="/skills" element={<SkillsPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </PageTransition>
         <Footer />
       </BrowserRouter>
     </TooltipProvider>
