@@ -10,12 +10,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { LogOut, Trash2, Plus, Undo2, RotateCcw, Save } from "lucide-react";
+import { LogOut, Trash2, Plus, Undo2, RotateCcw, Save, Palette, Check } from "lucide-react";
+import { themeOptions, getSavedTheme, saveTheme, type ThemeOption } from "@/lib/themeManager";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { data, update, undo, reset } = usePortfolio();
   const [activeTab, setActiveTab] = useState("profile");
+  const [selectedTheme, setSelectedTheme] = useState<ThemeOption>(getSavedTheme());
 
   useEffect(() => {
     if (!isAdmin()) navigate("/login");
@@ -31,7 +33,13 @@ export default function DashboardPage() {
     { id: "certifications", label: "Certifications" },
     { id: "skills", label: "Skills" },
     { id: "achievements", label: "Achievements" },
+    { id: "theme", label: "🎨 Theme" },
   ];
+
+  const handleSaveTheme = () => {
+    saveTheme(selectedTheme);
+    toast.success(`Theme saved: ${themeOptions.find(t => t.value === selectedTheme)?.label}`);
+  };
 
   return (
     <main className="py-8">
@@ -65,84 +73,75 @@ export default function DashboardPage() {
         {/* Profile */}
         {activeTab === "profile" && (
           <div className="max-w-lg space-y-4">
-            <div>
-              <Label>Name</Label>
-              <Input value={data.name} onChange={(e) => update((d) => ({ ...d, name: e.target.value }))} />
-            </div>
-            <div>
-              <Label>Role</Label>
-              <Input value={data.role} onChange={(e) => update((d) => ({ ...d, role: e.target.value }))} />
-            </div>
-            <div>
-              <Label>Introduction</Label>
-              <Textarea value={data.intro} onChange={(e) => update((d) => ({ ...d, intro: e.target.value }))} rows={4} />
-            </div>
-            <div>
-              <Label>Email</Label>
-              <Input value={data.email} onChange={(e) => update((d) => ({ ...d, email: e.target.value }))} />
-            </div>
-            <div>
-              <Label>LinkedIn</Label>
-              <Input value={data.linkedin} onChange={(e) => update((d) => ({ ...d, linkedin: e.target.value }))} />
-            </div>
-            <div>
-              <Label>GitHub</Label>
-              <Input value={data.github} onChange={(e) => update((d) => ({ ...d, github: e.target.value }))} />
-            </div>
-            <Button onClick={() => toast.success("Profile saved!")} className="gap-1"><Save className="h-4 w-4" /> Save</Button>
+            <div><Label>Name</Label><Input value={data.name} onChange={(e) => update((d) => ({ ...d, name: e.target.value }))} /></div>
+            <div><Label>Role</Label><Input value={data.role} onChange={(e) => update((d) => ({ ...d, role: e.target.value }))} /></div>
+            <div><Label>Introduction</Label><Textarea value={data.intro} onChange={(e) => update((d) => ({ ...d, intro: e.target.value }))} rows={4} /></div>
+            <div><Label>Email</Label><Input value={data.email} onChange={(e) => update((d) => ({ ...d, email: e.target.value }))} /></div>
+            <div><Label>LinkedIn</Label><Input value={data.linkedin} onChange={(e) => update((d) => ({ ...d, linkedin: e.target.value }))} /></div>
+            <div><Label>GitHub</Label><Input value={data.github} onChange={(e) => update((d) => ({ ...d, github: e.target.value }))} /></div>
+            <Button onClick={() => toast.success("Profile saved!")} className="gap-1"><Save className="h-4 w-4" /> Save Profile</Button>
           </div>
         )}
 
         {/* Education */}
         {activeTab === "education" && (
-          <SectionEditor<Education>
-            items={data.education}
-            onUpdate={(items) => update((d) => ({ ...d, education: items }))}
-            fields={[
-              { key: "institution", label: "Institution" },
-              { key: "course", label: "Course / Degree" },
-              { key: "duration", label: "Duration" },
-              { key: "score", label: "Score (GPA / %)" },
-            ]}
-            createNew={() => ({ id: generateId(), institution: "", course: "", duration: "", score: "" })}
-          />
+          <div>
+            <SectionEditor<Education>
+              items={data.education}
+              onUpdate={(items) => update((d) => ({ ...d, education: items }))}
+              fields={[
+                { key: "institution", label: "Institution" },
+                { key: "course", label: "Course / Degree" },
+                { key: "duration", label: "Duration" },
+                { key: "score", label: "Score (GPA / %)" },
+              ]}
+              createNew={() => ({ id: generateId(), institution: "", course: "", duration: "", score: "" })}
+            />
+            <Button onClick={() => toast.success("Education saved!")} className="gap-1 mt-4"><Save className="h-4 w-4" /> Save Education</Button>
+          </div>
         )}
 
         {/* Internships */}
         {activeTab === "internships" && (
-          <SectionEditor<Internship>
-            items={data.internships}
-            onUpdate={(items) => update((d) => ({ ...d, internships: items }))}
-            fields={[
-              { key: "role", label: "Role" },
-              { key: "organization", label: "Organization" },
-              { key: "duration", label: "Duration" },
-              { key: "responsibilities", label: "Responsibilities", multiline: true },
-            ]}
-            createNew={() => ({ id: generateId(), role: "", organization: "", duration: "", responsibilities: "" })}
-          />
+          <div>
+            <SectionEditor<Internship>
+              items={data.internships}
+              onUpdate={(items) => update((d) => ({ ...d, internships: items }))}
+              fields={[
+                { key: "role", label: "Role" },
+                { key: "organization", label: "Organization" },
+                { key: "duration", label: "Duration" },
+                { key: "responsibilities", label: "Responsibilities", multiline: true },
+              ]}
+              createNew={() => ({ id: generateId(), role: "", organization: "", duration: "", responsibilities: "" })}
+            />
+            <Button onClick={() => toast.success("Internships saved!")} className="gap-1 mt-4"><Save className="h-4 w-4" /> Save Internships</Button>
+          </div>
         )}
 
         {/* Projects */}
         {activeTab === "projects" && (
-          <ProjectEditor
-            items={data.projects}
-            onUpdate={(items) => update((d) => ({ ...d, projects: items }))}
-          />
+          <div>
+            <ProjectEditor items={data.projects} onUpdate={(items) => update((d) => ({ ...d, projects: items }))} />
+            <Button onClick={() => toast.success("Projects saved!")} className="gap-1 mt-4"><Save className="h-4 w-4" /> Save Projects</Button>
+          </div>
         )}
 
         {/* Certifications */}
         {activeTab === "certifications" && (
-          <SectionEditor<Certification>
-            items={data.certifications}
-            onUpdate={(items) => update((d) => ({ ...d, certifications: items }))}
-            fields={[
-              { key: "title", label: "Title" },
-              { key: "platform", label: "Platform" },
-              { key: "date", label: "Date" },
-            ]}
-            createNew={() => ({ id: generateId(), title: "", platform: "", date: "" })}
-          />
+          <div>
+            <SectionEditor<Certification>
+              items={data.certifications}
+              onUpdate={(items) => update((d) => ({ ...d, certifications: items }))}
+              fields={[
+                { key: "title", label: "Title" },
+                { key: "platform", label: "Platform" },
+                { key: "date", label: "Date" },
+              ]}
+              createNew={() => ({ id: generateId(), title: "", platform: "", date: "" })}
+            />
+            <Button onClick={() => toast.success("Certifications saved!")} className="gap-1 mt-4"><Save className="h-4 w-4" /> Save Certifications</Button>
+          </div>
         )}
 
         {/* Skills */}
@@ -161,7 +160,7 @@ export default function DashboardPage() {
                 />
               </div>
             ))}
-            <Button onClick={() => toast.success("Skills saved!")} className="gap-1"><Save className="h-4 w-4" /> Save</Button>
+            <Button onClick={() => toast.success("Skills saved!")} className="gap-1"><Save className="h-4 w-4" /> Save Skills</Button>
           </div>
         )}
 
@@ -188,6 +187,48 @@ export default function DashboardPage() {
             ))}
             <Button variant="outline" onClick={() => update((d) => ({ ...d, achievements: [...d.achievements, ""] }))} className="gap-1">
               <Plus className="h-4 w-4" /> Add Achievement
+            </Button>
+            <Button onClick={() => toast.success("Achievements saved!")} className="gap-1 mt-2"><Save className="h-4 w-4" /> Save Achievements</Button>
+          </div>
+        )}
+
+        {/* Theme Settings */}
+        {activeTab === "theme" && (
+          <div className="max-w-lg space-y-6">
+            <div>
+              <h2 className="text-xl font-semibold text-foreground mb-1 flex items-center gap-2">
+                <Palette className="h-5 w-5" /> Theme Settings
+              </h2>
+              <p className="text-sm text-muted-foreground mb-6">Select a theme for your portfolio. The theme will be applied globally and persist across sessions.</p>
+            </div>
+            <div className="grid gap-3">
+              {themeOptions.map((t) => (
+                <button
+                  key={t.value}
+                  onClick={() => setSelectedTheme(t.value)}
+                  className={`flex items-center gap-4 rounded-lg border p-4 text-left transition-all ${
+                    selectedTheme === t.value
+                      ? "border-primary bg-primary/10 ring-2 ring-primary"
+                      : "border-border bg-card hover:border-primary/50"
+                  }`}
+                >
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                    t.value === "light" ? "bg-[hsl(0,0%,98%)] border border-[hsl(0,0%,85%)]" :
+                    t.value === "dark" ? "bg-[hsl(0,0%,15%)]" :
+                    t.value === "glassmorphism" ? "bg-gradient-to-br from-[hsl(250,60%,80%)] to-[hsl(280,40%,85%)]" :
+                    "bg-gradient-to-br from-[hsl(200,90%,55%)] to-[hsl(215,80%,30%)]"
+                  }`}>
+                    {selectedTheme === t.value && <Check className={`h-5 w-5 ${t.value === "dark" || t.value === "gradient-blue" ? "text-[hsl(0,0%,95%)]" : "text-[hsl(0,0%,15%)]"}`} />}
+                  </div>
+                  <div>
+                    <p className="font-medium text-card-foreground">{t.label}</p>
+                    <p className="text-xs text-muted-foreground">{t.description}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <Button onClick={handleSaveTheme} className="gap-1">
+              <Save className="h-4 w-4" /> Save Theme
             </Button>
           </div>
         )}
