@@ -1,35 +1,66 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useState, useCallback } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { isAdmin, logout } from "@/lib/auth";
 import { Menu, X, Shield, LogOut, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "@/components/ThemeToggle";
 
-const navLinks = [
-  { to: "/", label: "Home" },
-  { to: "/education", label: "Education" },
-  { to: "/experience", label: "Experience" },
+const anchorLinks = [
+  { id: "home", label: "Home" },
+  { id: "education", label: "Education" },
+  { id: "skills", label: "Skills" },
+  { id: "certifications", label: "Certifications" },
+  { id: "contact", label: "Contact" },
+];
+
+const pageLinks = [
   { to: "/projects", label: "Projects" },
-  { to: "/certifications", label: "Certifications" },
-  { to: "/skills", label: "Skills" },
-  { to: "/contact", label: "Contact" },
+  { to: "/experience", label: "Experience" },
 ];
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const admin = isAdmin();
+
+  const scrollToSection = useCallback((id: string) => {
+    const doScroll = () => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" });
+      }
+    };
+
+    if (location.pathname !== "/") {
+      navigate("/");
+      // Wait for navigation then scroll
+      setTimeout(doScroll, 100);
+    } else {
+      doScroll();
+    }
+    setOpen(false);
+  }, [location.pathname, navigate]);
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
       <div className="container flex h-16 items-center justify-between">
-        <Link to="/" className="text-xl font-bold text-foreground">
+        <button onClick={() => scrollToSection("home")} className="text-xl font-bold text-foreground">
           Pradesha<span className="text-primary">.</span>
-        </Link>
+        </button>
 
         {/* Desktop */}
         <div className="hidden items-center gap-1 md:flex">
-          {navLinks.map((l) => (
+          {anchorLinks.map((l) => (
+            <button
+              key={l.id}
+              onClick={() => scrollToSection(l.id)}
+              className="rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground text-muted-foreground"
+            >
+              {l.label}
+            </button>
+          ))}
+          {pageLinks.map((l) => (
             <Link
               key={l.to}
               to={l.to}
@@ -74,7 +105,16 @@ export default function Navbar() {
       {/* Mobile menu */}
       {open && (
         <div className="border-t border-border bg-background p-4 md:hidden animate-fade-in">
-          {navLinks.map((l) => (
+          {anchorLinks.map((l) => (
+            <button
+              key={l.id}
+              onClick={() => scrollToSection(l.id)}
+              className="block w-full text-left rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+            >
+              {l.label}
+            </button>
+          ))}
+          {pageLinks.map((l) => (
             <Link
               key={l.to}
               to={l.to}
