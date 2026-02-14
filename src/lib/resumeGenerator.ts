@@ -1,7 +1,12 @@
 import jsPDF from "jspdf";
 import { getPortfolioData } from "./portfolioData";
 
-export function generateResume() {
+async function generateQRDataURL(text: string): Promise<string> {
+  const QRCode = await import("qrcode");
+  return QRCode.toDataURL(text, { width: 100, margin: 1 });
+}
+
+export async function generateResume(portfolioUrl?: string) {
   const d = getPortfolioData();
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -35,6 +40,12 @@ export function generateResume() {
     y += 2;
   };
 
+  const formatDate = (iso?: string) => {
+    if (!iso) return "";
+    try { return new Date(iso).toLocaleDateString("en-US", { month: "short", year: "numeric" }); }
+    catch { return ""; }
+  };
+
   // Header
   addLine(d.name, 22, true, [10, 10, 10]);
   addLine(d.role, 12, false, [80, 80, 80]);
@@ -57,7 +68,9 @@ export function generateResume() {
     addSectionHeader("EXPERIENCE");
     d.internships.forEach((e) => {
       addLine(`${e.role} — ${e.organization}`, 10, true);
-      addLine(e.duration, 8, false, [100, 100, 100]);
+      const dates = [e.startDate && formatDate(e.startDate), e.endDate && formatDate(e.endDate)].filter(Boolean).join(" – ") || e.singleDate ? formatDate(e.singleDate) : "";
+      const durationStr = dates || e.duration;
+      addLine(durationStr, 8, false, [100, 100, 100]);
       addWrapped(e.responsibilities, 9);
       y += 2;
     });
@@ -67,6 +80,8 @@ export function generateResume() {
   addSectionHeader("PROJECTS");
   d.projects.forEach((p) => {
     addLine(`${p.title}${p.featured ? " ★" : ""}`, 10, true);
+    const pDates = [p.startDate && formatDate(p.startDate), p.endDate && formatDate(p.endDate)].filter(Boolean).join(" – ") || (p.singleDate ? formatDate(p.singleDate) : "");
+    if (pDates) addLine(pDates, 8, false, [100, 100, 100]);
     addWrapped(p.description, 9);
     if (p.techStack.length > 0) {
       addLine(`Tech: ${p.techStack.join(", ")}`, 8, false, [100, 100, 100]);
@@ -76,10 +91,15 @@ export function generateResume() {
 
   // Skills
   addSectionHeader("SKILLS");
-  addLine(`Languages: ${d.skills.languages.join(", ")}`, 9);
-  addLine(`Tools: ${d.skills.tools.join(", ")}`, 9);
-  addLine(`Platforms: ${d.skills.platforms.join(", ")}`, 9);
-  addLine(`Other: ${d.skills.other.join(", ")}`, 9);
+  const levels = d.skillLevels || {};
+  const formatSkillWithLevel = (s: string) => {
+    const lvl = levels[s];
+    return lvl ? `${s} (${lvl})` : s;
+  };
+  addLine(`Languages: ${d.skills.languages.map(formatSkillWithLevel).join(", ")}`, 9);
+  addLine(`Tools: ${d.skills.tools.map(formatSkillWithLevel).join(", ")}`, 9);
+  addLine(`Platforms: ${d.skills.platforms.map(formatSkillWithLevel).join(", ")}`, 9);
+  addLine(`Other: ${d.skills.other.map(formatSkillWithLevel).join(", ")}`, 9);
 
   // Certifications
   if (d.certifications.length > 0) {
@@ -95,6 +115,22 @@ export function generateResume() {
     d.achievements.forEach((a) => {
       addLine(`• ${a}`, 9);
     });
+  }
+
+  // QR Code
+  const url = portfolioUrl || window.location.origin;
+  try {
+    const qrDataUrl = await generateQRDataURL(url);
+    if (y > 240) { doc.addPage(); y = 20; }
+    y += 6;
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text("Scan to view portfolio:", pageWidth - 45, y);
+    y += 2;
+    doc.addImage(qrDataUrl, "PNG", pageWidth - 40, y, 25, 25);
+    y += 28;
+  } catch {
+    // QR generation failed, skip
   }
 
   doc.save(`${d.name.replace(/\s+/g, "_")}_Resume.pdf`);

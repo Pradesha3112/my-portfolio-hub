@@ -15,6 +15,9 @@ export interface Internship {
   organization: string;
   duration: string;
   responsibilities: string;
+  startDate?: string;
+  endDate?: string;
+  singleDate?: string;
 }
 
 export interface Project {
@@ -24,6 +27,12 @@ export interface Project {
   techStack: string[];
   link: string;
   featured: boolean;
+  startDate?: string;
+  endDate?: string;
+  singleDate?: string;
+  demoUrl?: string;
+  demoVideoUrl?: string;
+  images?: string[];
 }
 
 export interface Certification {
@@ -31,7 +40,10 @@ export interface Certification {
   title: string;
   platform: string;
   date: string;
+  certificateUrl?: string;
 }
+
+// Certification is now defined above with Project
 
 export interface PortfolioData {
   name: string;
@@ -46,6 +58,7 @@ export interface PortfolioData {
     platforms: string[];
     other: string[];
   };
+  skillLevels: Record<string, "Beginner" | "Intermediate" | "Advanced">;
   education: Education[];
   internships: Internship[];
   projects: Project[];
@@ -66,6 +79,12 @@ const defaultData: PortfolioData = {
     tools: ["Git", "GitHub", "Canva", "MS Excel", "PowerPoint", "Figma", "WordPress"],
     platforms: ["Jupyter Notebook", "Visual Studio Code", "Google Colab"],
     other: ["Analytical Skills", "Problem Solving", "Creative Thinking", "Basic UI/UX Design"],
+  },
+  skillLevels: {
+    Python: "Intermediate", HTML: "Advanced", CSS: "Advanced", JavaScript: "Intermediate",
+    Git: "Intermediate", GitHub: "Intermediate", Canva: "Advanced", "MS Excel": "Intermediate",
+    PowerPoint: "Intermediate", Figma: "Intermediate", WordPress: "Intermediate",
+    "Jupyter Notebook": "Intermediate", "Visual Studio Code": "Advanced", "Google Colab": "Intermediate",
   },
   education: [
     {

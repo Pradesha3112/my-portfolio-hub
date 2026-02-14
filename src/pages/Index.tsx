@@ -21,13 +21,6 @@ import {
   AddButton,
 } from "@/components/InlineEdit";
 
-const skillLevels: Record<string, "Beginner" | "Intermediate" | "Advanced"> = {
-  Python: "Intermediate", HTML: "Advanced", CSS: "Advanced", JavaScript: "Intermediate",
-  Git: "Intermediate", GitHub: "Intermediate", Canva: "Advanced", "MS Excel": "Intermediate",
-  PowerPoint: "Intermediate", Figma: "Intermediate", WordPress: "Intermediate",
-  "Jupyter Notebook": "Intermediate", "Visual Studio Code": "Advanced", "Google Colab": "Intermediate",
-};
-
 const skillCategories = [
   { key: "languages", label: "Languages", showBar: true },
   { key: "tools", label: "Tools", showBar: false },
@@ -223,7 +216,7 @@ export default function Index() {
                 ) : cat.showBar ? (
                   <div className="grid gap-x-12 gap-y-1 md:grid-cols-2">
                     {d.skills[cat.key].map((s) => (
-                      <SkillBar key={s} name={s} level={skillLevels[s] || "Intermediate"} />
+                      <SkillBar key={s} name={s} level={d.skillLevels?.[s] || "Intermediate"} />
                     ))}
                   </div>
                 ) : (
@@ -305,6 +298,13 @@ export default function Index() {
                     <h3 className="font-semibold text-card-foreground">{c.title}</h3>
                     <p className="text-sm text-muted-foreground">{c.platform}</p>
                     {c.date && <p className="text-xs text-muted-foreground mt-1">{c.date}</p>}
+                    {c.certificateUrl && (
+                      <div className="mt-2 rounded-md overflow-hidden border border-border">
+                        <a href={c.certificateUrl} target="_blank" rel="noopener noreferrer">
+                          <img src={c.certificateUrl} alt={c.title} className="w-full h-32 object-cover hover:opacity-90 transition-opacity" />
+                        </a>
+                      </div>
+                    )}
                     <AdminActions>
                       <EditCertificationDialog
                         item={c}
