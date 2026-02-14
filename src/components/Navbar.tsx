@@ -3,7 +3,8 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { isAdmin, logout } from "@/lib/auth";
 import { Menu, X, Shield, LogOut, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import ThemeToggle from "@/components/ThemeToggle";
+import { generateResume } from "@/lib/resumeGenerator";
+import { toast } from "sonner";
 
 const anchorLinks = [
   { id: "home", label: "Home" },
@@ -34,13 +35,21 @@ export default function Navbar() {
 
     if (location.pathname !== "/") {
       navigate("/");
-      // Wait for navigation then scroll
       setTimeout(doScroll, 100);
     } else {
       doScroll();
     }
     setOpen(false);
   }, [location.pathname, navigate]);
+
+  const handleDownloadResume = () => {
+    try {
+      generateResume();
+      toast.success("Resume generated with latest data!");
+    } catch {
+      toast.error("Failed to generate resume");
+    }
+  };
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
@@ -71,12 +80,9 @@ export default function Navbar() {
               {l.label}
             </Link>
           ))}
-          <a href="/PRADESHA_S_Resume.pdf" download>
-            <Button variant="outline" size="sm" className="ml-2 gap-1">
-              <Download className="h-4 w-4" /> Resume
-            </Button>
-          </a>
-          <ThemeToggle />
+          <Button variant="outline" size="sm" className="ml-2 gap-1" onClick={handleDownloadResume}>
+            <Download className="h-4 w-4" /> Resume
+          </Button>
           {admin && (
             <>
               <Link to="/dashboard">
@@ -124,9 +130,9 @@ export default function Navbar() {
               {l.label}
             </Link>
           ))}
-          <a href="/PRADESHA_S_Resume.pdf" download className="block px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">
+          <button onClick={handleDownloadResume} className="block w-full text-left px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">
             📄 Download Resume
-          </a>
+          </button>
           {admin && (
             <>
               <Link to="/dashboard" onClick={() => setOpen(false)} className="block px-3 py-2 text-sm font-medium text-muted-foreground">

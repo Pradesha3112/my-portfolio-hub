@@ -1,10 +1,9 @@
 import { createRoot } from "react-dom/client";
-import { ThemeProvider } from "next-themes";
 import App from "./App.tsx";
 import "./index.css";
+import { applyTheme, getSavedTheme } from "./lib/themeManager";
 
-createRoot(document.getElementById("root")!).render(
-  <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-    <App />
-  </ThemeProvider>
-);
+// Apply persisted theme on load
+applyTheme(getSavedTheme());
+
+createRoot(document.getElementById("root")!).render(<App />);
