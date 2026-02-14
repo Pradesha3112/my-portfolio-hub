@@ -7,11 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { LogOut, Trash2, Plus, Undo2, RotateCcw, Save, Palette, Check } from "lucide-react";
+import { LogOut, Trash2, Plus, Undo2, RotateCcw, Save, Palette, Check, Calendar as CalendarIcon, Image, Video, ExternalLink } from "lucide-react";
 import { themeOptions, getSavedTheme, saveTheme, type ThemeOption } from "@/lib/themeManager";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -104,17 +108,7 @@ export default function DashboardPage() {
         {/* Internships */}
         {activeTab === "internships" && (
           <div>
-            <SectionEditor<Internship>
-              items={data.internships}
-              onUpdate={(items) => update((d) => ({ ...d, internships: items }))}
-              fields={[
-                { key: "role", label: "Role" },
-                { key: "organization", label: "Organization" },
-                { key: "duration", label: "Duration" },
-                { key: "responsibilities", label: "Responsibilities", multiline: true },
-              ]}
-              createNew={() => ({ id: generateId(), role: "", organization: "", duration: "", responsibilities: "" })}
-            />
+            <InternshipEditor items={data.internships} onUpdate={(items) => update((d) => ({ ...d, internships: items }))} />
             <Button onClick={() => toast.success("Internships saved!")} className="gap-1 mt-4"><Save className="h-4 w-4" /> Save Internships</Button>
           </div>
         )}
@@ -130,16 +124,7 @@ export default function DashboardPage() {
         {/* Certifications */}
         {activeTab === "certifications" && (
           <div>
-            <SectionEditor<Certification>
-              items={data.certifications}
-              onUpdate={(items) => update((d) => ({ ...d, certifications: items }))}
-              fields={[
-                { key: "title", label: "Title" },
-                { key: "platform", label: "Platform" },
-                { key: "date", label: "Date" },
-              ]}
-              createNew={() => ({ id: generateId(), title: "", platform: "", date: "" })}
-            />
+            <CertificationEditor items={data.certifications} onUpdate={(items) => update((d) => ({ ...d, certifications: items }))} />
             <Button onClick={() => toast.success("Certifications saved!")} className="gap-1 mt-4"><Save className="h-4 w-4" /> Save Certifications</Button>
           </div>
         )}
@@ -160,6 +145,37 @@ export default function DashboardPage() {
                 />
               </div>
             ))}
+
+            <div className="border-t border-border pt-4">
+              <h3 className="text-lg font-semibold text-foreground mb-3">Skill Proficiency Levels</h3>
+              <p className="text-sm text-muted-foreground mb-4">Set proficiency for each skill (shown on portfolio & resume)</p>
+              <div className="space-y-2">
+                {Object.values(data.skills).flat().map((skill) => (
+                  <div key={skill} className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-foreground w-40 truncate">{skill}</span>
+                    <Select
+                      value={data.skillLevels?.[skill] || "Intermediate"}
+                      onValueChange={(v) =>
+                        update((d) => ({
+                          ...d,
+                          skillLevels: { ...d.skillLevels, [skill]: v as "Beginner" | "Intermediate" | "Advanced" },
+                        }))
+                      }
+                    >
+                      <SelectTrigger className="w-36">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Beginner">Beginner</SelectItem>
+                        <SelectItem value="Intermediate">Intermediate</SelectItem>
+                        <SelectItem value="Advanced">Advanced</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <Button onClick={() => toast.success("Skills saved!")} className="gap-1"><Save className="h-4 w-4" /> Save Skills</Button>
           </div>
         )}
@@ -194,14 +210,14 @@ export default function DashboardPage() {
 
         {/* Theme Settings */}
         {activeTab === "theme" && (
-          <div className="max-w-lg space-y-6">
+          <div className="max-w-2xl space-y-6">
             <div>
               <h2 className="text-xl font-semibold text-foreground mb-1 flex items-center gap-2">
                 <Palette className="h-5 w-5" /> Theme Settings
               </h2>
-              <p className="text-sm text-muted-foreground mb-6">Select a theme for your portfolio. The theme will be applied globally and persist across sessions.</p>
+              <p className="text-sm text-muted-foreground mb-6">Select a theme for your portfolio. Applied globally and persists across sessions.</p>
             </div>
-            <div className="grid gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               {themeOptions.map((t) => (
                 <button
                   key={t.value}
@@ -212,13 +228,8 @@ export default function DashboardPage() {
                       : "border-border bg-card hover:border-primary/50"
                   }`}
                 >
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                    t.value === "light" ? "bg-[hsl(0,0%,98%)] border border-[hsl(0,0%,85%)]" :
-                    t.value === "dark" ? "bg-[hsl(0,0%,15%)]" :
-                    t.value === "glassmorphism" ? "bg-gradient-to-br from-[hsl(250,60%,80%)] to-[hsl(280,40%,85%)]" :
-                    "bg-gradient-to-br from-[hsl(200,90%,55%)] to-[hsl(215,80%,30%)]"
-                  }`}>
-                    {selectedTheme === t.value && <Check className={`h-5 w-5 ${t.value === "dark" || t.value === "gradient-blue" ? "text-[hsl(0,0%,95%)]" : "text-[hsl(0,0%,15%)]"}`} />}
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-full flex-shrink-0 ${t.preview}`}>
+                    {selectedTheme === t.value && <Check className="h-5 w-5" />}
                   </div>
                   <div>
                     <p className="font-medium text-card-foreground">{t.label}</p>
@@ -234,6 +245,38 @@ export default function DashboardPage() {
         )}
       </div>
     </main>
+  );
+}
+
+// Date picker helper
+function DatePickerField({ label, value, onChange }: { label: string; value?: string; onChange: (v: string) => void }) {
+  const date = value ? new Date(value) : undefined;
+  return (
+    <div>
+      <Label>{label}</Label>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}>
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {date ? format(date, "PPP") : <span>Pick a date</span>}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={date}
+            onSelect={(d) => d && onChange(d.toISOString())}
+            initialFocus
+            className={cn("p-3 pointer-events-auto")}
+          />
+        </PopoverContent>
+      </Popover>
+      {value && (
+        <Button variant="ghost" size="sm" className="mt-1 text-xs text-muted-foreground" onClick={() => onChange("")}>
+          Clear date
+        </Button>
+      )}
+    </div>
   );
 }
 
@@ -280,7 +323,47 @@ function SectionEditor<T extends { id: string }>({
   );
 }
 
-// Project editor with featured toggle
+// Internship editor with date pickers
+function InternshipEditor({ items, onUpdate }: { items: Internship[]; onUpdate: (items: Internship[]) => void }) {
+  const handleChange = (index: number, key: string, value: unknown) => {
+    const arr = [...items];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (arr[index] as any)[key] = value;
+    onUpdate(arr);
+  };
+
+  return (
+    <div className="space-y-6">
+      {items.map((item, i) => (
+        <div key={item.id} className="rounded-lg border border-border bg-card p-5 space-y-3">
+          <div><Label>Role</Label><Input value={item.role} onChange={(e) => handleChange(i, "role", e.target.value)} /></div>
+          <div><Label>Organization</Label><Input value={item.organization} onChange={(e) => handleChange(i, "organization", e.target.value)} /></div>
+          <div><Label>Duration (text)</Label><Input value={item.duration} onChange={(e) => handleChange(i, "duration", e.target.value)} /></div>
+          <div><Label>Responsibilities</Label><Textarea value={item.responsibilities} onChange={(e) => handleChange(i, "responsibilities", e.target.value)} rows={3} /></div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <DatePickerField label="Start Date" value={item.startDate} onChange={(v) => handleChange(i, "startDate", v)} />
+            <DatePickerField label="End Date" value={item.endDate} onChange={(v) => handleChange(i, "endDate", v)} />
+            <DatePickerField label="Single Date" value={item.singleDate} onChange={(v) => handleChange(i, "singleDate", v)} />
+          </div>
+          <Button variant="ghost" size="sm" className="text-destructive gap-1" onClick={() => {
+            onUpdate(items.filter((_, j) => j !== i));
+            toast.success("Experience removed");
+          }}>
+            <Trash2 className="h-4 w-4" /> Remove
+          </Button>
+        </div>
+      ))}
+      <Button variant="outline" onClick={() => {
+        onUpdate([...items, { id: generateId(), role: "", organization: "", duration: "", responsibilities: "" }]);
+        toast.success("Experience added");
+      }} className="gap-1">
+        <Plus className="h-4 w-4" /> Add Experience
+      </Button>
+    </div>
+  );
+}
+
+// Project editor with date pickers, demo URL, video URL, images
 function ProjectEditor({ items, onUpdate }: { items: Project[]; onUpdate: (items: Project[]) => void }) {
   const handleChange = (index: number, key: string, value: unknown) => {
     const arr = [...items];
@@ -301,6 +384,17 @@ function ProjectEditor({ items, onUpdate }: { items: Project[]; onUpdate: (items
             <Switch checked={p.featured} onCheckedChange={(v) => handleChange(i, "featured", v)} />
             <Label>Featured</Label>
           </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <DatePickerField label="Start Date" value={p.startDate} onChange={(v) => handleChange(i, "startDate", v)} />
+            <DatePickerField label="End Date" value={p.endDate} onChange={(v) => handleChange(i, "endDate", v)} />
+            <DatePickerField label="Single Date" value={p.singleDate} onChange={(v) => handleChange(i, "singleDate", v)} />
+          </div>
+          <div className="border-t border-border pt-3 space-y-3">
+            <h4 className="text-sm font-semibold text-foreground flex items-center gap-1"><Video className="h-4 w-4" /> Demo & Media</h4>
+            <div><Label>Live Demo URL (iframe)</Label><Input value={p.demoUrl || ""} onChange={(e) => handleChange(i, "demoUrl", e.target.value)} placeholder="https://your-demo.github.io" /></div>
+            <div><Label>Demo Video URL</Label><Input value={p.demoVideoUrl || ""} onChange={(e) => handleChange(i, "demoVideoUrl", e.target.value)} placeholder="https://youtube.com/embed/..." /></div>
+            <div><Label>Image URLs (comma-separated)</Label><Input value={(p.images || []).join(", ")} onChange={(e) => handleChange(i, "images", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} placeholder="https://img1.png, https://img2.png" /></div>
+          </div>
           <Button variant="ghost" size="sm" className="text-destructive gap-1" onClick={() => {
             onUpdate(items.filter((_, j) => j !== i));
             toast.success("Project removed");
@@ -314,6 +408,49 @@ function ProjectEditor({ items, onUpdate }: { items: Project[]; onUpdate: (items
         toast.success("Project added");
       }} className="gap-1">
         <Plus className="h-4 w-4" /> Add Project
+      </Button>
+    </div>
+  );
+}
+
+// Certification editor with certificate URL
+function CertificationEditor({ items, onUpdate }: { items: Certification[]; onUpdate: (items: Certification[]) => void }) {
+  const handleChange = (index: number, key: string, value: string) => {
+    const arr = [...items];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (arr[index] as any)[key] = value;
+    onUpdate(arr);
+  };
+
+  return (
+    <div className="space-y-6">
+      {items.map((c, i) => (
+        <div key={c.id} className="rounded-lg border border-border bg-card p-5 space-y-3">
+          <div><Label>Title</Label><Input value={c.title} onChange={(e) => handleChange(i, "title", e.target.value)} /></div>
+          <div><Label>Platform</Label><Input value={c.platform} onChange={(e) => handleChange(i, "platform", e.target.value)} /></div>
+          <div><Label>Date</Label><Input value={c.date} onChange={(e) => handleChange(i, "date", e.target.value)} /></div>
+          <div>
+            <Label className="flex items-center gap-1"><Image className="h-3 w-3" /> Certificate Image/URL</Label>
+            <Input value={c.certificateUrl || ""} onChange={(e) => handleChange(i, "certificateUrl", e.target.value)} placeholder="https://certificate-image.png" />
+          </div>
+          {c.certificateUrl && (
+            <div className="rounded-md overflow-hidden border border-border">
+              <img src={c.certificateUrl} alt={c.title} className="w-full h-32 object-cover" />
+            </div>
+          )}
+          <Button variant="ghost" size="sm" className="text-destructive gap-1" onClick={() => {
+            onUpdate(items.filter((_, j) => j !== i));
+            toast.success("Certification removed");
+          }}>
+            <Trash2 className="h-4 w-4" /> Remove
+          </Button>
+        </div>
+      ))}
+      <Button variant="outline" onClick={() => {
+        onUpdate([...items, { id: generateId(), title: "", platform: "", date: "" }]);
+        toast.success("Certification added");
+      }} className="gap-1">
+        <Plus className="h-4 w-4" /> Add Certification
       </Button>
     </div>
   );

@@ -1,8 +1,14 @@
 import { isAdmin } from "@/lib/auth";
 import AnimatedSection from "@/components/AnimatedSection";
-import { Briefcase, Pencil, Plus } from "lucide-react";
+import { Briefcase, Pencil, Plus, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useInlineData, EditInternshipDialog, DeleteButton, AdminActions, AddButton } from "@/components/InlineEdit";
+
+function formatDate(iso?: string) {
+  if (!iso) return "";
+  try { return new Date(iso).toLocaleDateString("en-US", { month: "short", year: "numeric" }); }
+  catch { return ""; }
+}
 
 export default function ExperiencePage() {
   const { data: d, save } = useInlineData();
@@ -25,6 +31,12 @@ export default function ExperiencePage() {
                 </div>
                 <div className="rounded-lg border border-border bg-card p-5">
                   <p className="text-xs text-muted-foreground">{item.duration}</p>
+                  {(item.startDate || item.endDate || item.singleDate) && (
+                    <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {item.singleDate ? formatDate(item.singleDate) : `${formatDate(item.startDate)} – ${formatDate(item.endDate)}`}
+                    </p>
+                  )}
                   <h3 className="mt-1 text-lg font-semibold text-card-foreground">{item.role}</h3>
                   <p className="text-sm font-medium text-muted-foreground">{item.organization}</p>
                   <p className="mt-2 text-sm text-muted-foreground">{item.responsibilities}</p>

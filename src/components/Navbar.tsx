@@ -42,9 +42,9 @@ export default function Navbar() {
     setOpen(false);
   }, [location.pathname, navigate]);
 
-  const handleDownloadResume = () => {
+  const handleDownloadResume = async () => {
     try {
-      generateResume();
+      await generateResume();
       toast.success("Resume generated with latest data!");
     } catch {
       toast.error("Failed to generate resume");
