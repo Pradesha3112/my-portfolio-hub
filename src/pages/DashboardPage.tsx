@@ -2,26 +2,30 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { isAdmin, logout } from "@/lib/auth";
 import { usePortfolio } from "@/hooks/usePortfolio";
-import { generateId, type Education, type Internship, type Project, type Certification } from "@/lib/portfolioData";
+import { generateId, getResumeItems, type Education, type Internship, type Project, type Certification } from "@/lib/portfolioData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { LogOut, Trash2, Plus, Undo2, RotateCcw, Save, Palette, Check, Calendar as CalendarIcon, Image, Video, ExternalLink } from "lucide-react";
+import { LogOut, Trash2, Plus, Undo2, RotateCcw, Save, Palette, Check, Calendar as CalendarIcon, Image, Video, Eye, FileText, AlertTriangle } from "lucide-react";
 import { themeOptions, getSavedTheme, saveTheme, type ThemeOption } from "@/lib/themeManager";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { generateResume } from "@/lib/resumeGenerator";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { data, update, undo, reset } = usePortfolio();
   const [activeTab, setActiveTab] = useState("profile");
   const [selectedTheme, setSelectedTheme] = useState<ThemeOption>(getSavedTheme());
+  const [showResetDialog, setShowResetDialog] = useState(false);
 
   useEffect(() => {
     if (!isAdmin()) navigate("/login");
@@ -37,6 +41,7 @@ export default function DashboardPage() {
     { id: "certifications", label: "Certifications" },
     { id: "skills", label: "Skills" },
     { id: "achievements", label: "Achievements" },
+    { id: "resume", label: "📄 Resume" },
     { id: "theme", label: "🎨 Theme" },
   ];
 
@@ -45,16 +50,27 @@ export default function DashboardPage() {
     toast.success(`Theme saved: ${themeOptions.find(t => t.value === selectedTheme)?.label}`);
   };
 
+  const handleReset = () => {
+    reset();
+    setShowResetDialog(false);
+    toast.info("Reset to default");
+  };
+
+  const resumeItems = getResumeItems(data);
+
   return (
     <main className="py-8">
       <div className="container">
         <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
           <h1 className="text-2xl font-bold text-foreground">Admin Dashboard</h1>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" size="sm" onClick={() => window.open("/", "_blank")} className="gap-1">
+              <Eye className="h-4 w-4" /> Preview
+            </Button>
             <Button variant="outline" size="sm" onClick={() => { undo(); toast.info("Changes undone"); }} className="gap-1">
               <Undo2 className="h-4 w-4" /> Undo
             </Button>
-            <Button variant="outline" size="sm" onClick={() => { reset(); toast.info("Reset to default"); }} className="gap-1">
+            <Button variant="outline" size="sm" onClick={() => setShowResetDialog(true)} className="gap-1">
               <RotateCcw className="h-4 w-4" /> Reset
             </Button>
             <Button variant="destructive" size="sm" onClick={() => { logout(); navigate("/"); }} className="gap-1">
@@ -62,6 +78,20 @@ export default function DashboardPage() {
             </Button>
           </div>
         </div>
+
+        {/* Reset confirmation dialog */}
+        <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-destructive" /> Confirm Reset</DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground">This will reset all portfolio data to defaults. This action cannot be undone.</p>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowResetDialog(false)}>Cancel</Button>
+              <Button variant="destructive" onClick={handleReset}>Reset Everything</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <p className="text-xs text-muted-foreground mb-6">Last edited: {new Date(data.lastEdited).toLocaleString()}</p>
 
@@ -145,7 +175,6 @@ export default function DashboardPage() {
                 />
               </div>
             ))}
-
             <div className="border-t border-border pt-4">
               <h3 className="text-lg font-semibold text-foreground mb-3">Skill Proficiency Levels</h3>
               <p className="text-sm text-muted-foreground mb-4">Set proficiency for each skill (shown on portfolio & resume)</p>
@@ -162,9 +191,7 @@ export default function DashboardPage() {
                         }))
                       }
                     >
-                      <SelectTrigger className="w-36">
-                        <SelectValue />
-                      </SelectTrigger>
+                      <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Beginner">Beginner</SelectItem>
                         <SelectItem value="Intermediate">Intermediate</SelectItem>
@@ -175,7 +202,6 @@ export default function DashboardPage() {
                 ))}
               </div>
             </div>
-
             <Button onClick={() => toast.success("Skills saved!")} className="gap-1"><Save className="h-4 w-4" /> Save Skills</Button>
           </div>
         )}
@@ -205,6 +231,151 @@ export default function DashboardPage() {
               <Plus className="h-4 w-4" /> Add Achievement
             </Button>
             <Button onClick={() => toast.success("Achievements saved!")} className="gap-1 mt-2"><Save className="h-4 w-4" /> Save Achievements</Button>
+          </div>
+        )}
+
+        {/* Resume Review */}
+        {activeTab === "resume" && (
+          <div className="max-w-3xl space-y-8">
+            <div>
+              <h2 className="text-xl font-semibold text-foreground mb-1 flex items-center gap-2">
+                <FileText className="h-5 w-5" /> Resume Builder
+              </h2>
+              <p className="text-sm text-muted-foreground mb-6">Select items for your single-page resume. Unselected = auto-pick top items.</p>
+            </div>
+
+            {/* Skill Categories */}
+            <div className="rounded-lg border border-border bg-card p-5">
+              <h3 className="font-semibold text-card-foreground mb-3">Skill Categories</h3>
+              <div className="flex flex-wrap gap-4">
+                {(["languages", "tools", "platforms", "other"] as const).map((cat) => (
+                  <label key={cat} className="flex items-center gap-2 text-sm text-foreground capitalize">
+                    <Checkbox
+                      checked={data.resumeSelections.selectedSkillCategories.includes(cat)}
+                      onCheckedChange={(checked) => {
+                        update((d) => {
+                          const current = d.resumeSelections.selectedSkillCategories;
+                          const next = checked ? [...current, cat] : current.filter((c) => c !== cat);
+                          return { ...d, resumeSelections: { ...d.resumeSelections, selectedSkillCategories: next } };
+                        });
+                      }}
+                    />
+                    {cat}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Projects (max 3) */}
+            <div className="rounded-lg border border-border bg-card p-5">
+              <h3 className="font-semibold text-card-foreground mb-1">Projects <span className="text-xs text-muted-foreground font-normal">(max 3)</span></h3>
+              <p className="text-xs text-muted-foreground mb-3">If none selected, top featured/recent are auto-picked.</p>
+              <div className="space-y-2">
+                {data.projects.map((p) => (
+                  <label key={p.id} className="flex items-center gap-2 text-sm text-foreground">
+                    <Checkbox
+                      checked={data.resumeSelections.selectedProjects.includes(p.id)}
+                      disabled={!data.resumeSelections.selectedProjects.includes(p.id) && data.resumeSelections.selectedProjects.length >= 3}
+                      onCheckedChange={(checked) => {
+                        update((d) => {
+                          const current = d.resumeSelections.selectedProjects;
+                          const next = checked ? [...current, p.id] : current.filter((id) => id !== p.id);
+                          return { ...d, resumeSelections: { ...d.resumeSelections, selectedProjects: next } };
+                        });
+                      }}
+                    />
+                    {p.title} {p.featured && "★"}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Internships (max 2) */}
+            <div className="rounded-lg border border-border bg-card p-5">
+              <h3 className="font-semibold text-card-foreground mb-1">Internships / Training <span className="text-xs text-muted-foreground font-normal">(max 2)</span></h3>
+              <div className="space-y-2">
+                {data.internships.map((i) => (
+                  <label key={i.id} className="flex items-center gap-2 text-sm text-foreground">
+                    <Checkbox
+                      checked={data.resumeSelections.selectedInternships.includes(i.id)}
+                      disabled={!data.resumeSelections.selectedInternships.includes(i.id) && data.resumeSelections.selectedInternships.length >= 2}
+                      onCheckedChange={(checked) => {
+                        update((d) => {
+                          const current = d.resumeSelections.selectedInternships;
+                          const next = checked ? [...current, i.id] : current.filter((id) => id !== i.id);
+                          return { ...d, resumeSelections: { ...d.resumeSelections, selectedInternships: next } };
+                        });
+                      }}
+                    />
+                    {i.role} — {i.organization}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Certifications (max 4) */}
+            <div className="rounded-lg border border-border bg-card p-5">
+              <h3 className="font-semibold text-card-foreground mb-1">Certificates <span className="text-xs text-muted-foreground font-normal">(max 4)</span></h3>
+              <div className="space-y-2">
+                {data.certifications.map((c) => (
+                  <label key={c.id} className="flex items-center gap-2 text-sm text-foreground">
+                    <Checkbox
+                      checked={data.resumeSelections.selectedCertifications.includes(c.id)}
+                      disabled={!data.resumeSelections.selectedCertifications.includes(c.id) && data.resumeSelections.selectedCertifications.length >= 4}
+                      onCheckedChange={(checked) => {
+                        update((d) => {
+                          const current = d.resumeSelections.selectedCertifications;
+                          const next = checked ? [...current, c.id] : current.filter((id) => id !== c.id);
+                          return { ...d, resumeSelections: { ...d.resumeSelections, selectedCertifications: next } };
+                        });
+                      }}
+                    />
+                    {c.title} — {c.platform}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Preview summary */}
+            <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-5">
+              <h3 className="font-semibold text-foreground mb-3">Resume Preview Summary</h3>
+              <div className="grid gap-3 sm:grid-cols-2 text-sm text-foreground">
+                <div>
+                  <p className="font-medium">Projects ({resumeItems.projects.length}/3):</p>
+                  <ul className="ml-4 text-muted-foreground">
+                    {resumeItems.projects.map((p) => <li key={p.id}>• {p.title}</li>)}
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium">Internships ({resumeItems.internships.length}/2):</p>
+                  <ul className="ml-4 text-muted-foreground">
+                    {resumeItems.internships.map((i) => <li key={i.id}>• {i.role}</li>)}
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium">Certificates ({resumeItems.certifications.length}/4):</p>
+                  <ul className="ml-4 text-muted-foreground">
+                    {resumeItems.certifications.map((c) => <li key={c.id}>• {c.title}</li>)}
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium">Skill Categories:</p>
+                  <p className="ml-4 text-muted-foreground capitalize">{resumeItems.skillCategories.join(", ")}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Button onClick={() => { toast.success("Resume selections saved!"); }} className="gap-1">
+                <Save className="h-4 w-4" /> Save Selections
+              </Button>
+              <Button variant="outline" onClick={async () => {
+                try { await generateResume(); toast.success("Resume downloaded!"); }
+                catch { toast.error("Failed to generate resume"); }
+              }} className="gap-1">
+                <FileText className="h-4 w-4" /> Download Resume
+              </Button>
+            </div>
           </div>
         )}
 
@@ -267,7 +438,6 @@ function DatePickerField({ label, value, onChange }: { label: string; value?: st
             selected={date}
             onSelect={(d) => d && onChange(d.toISOString())}
             initialFocus
-            className={cn("p-3 pointer-events-auto")}
           />
         </PopoverContent>
       </Popover>
@@ -323,7 +493,7 @@ function SectionEditor<T extends { id: string }>({
   );
 }
 
-// Internship editor with date pickers
+// Internship editor with date pickers and thumbnail
 function InternshipEditor({ items, onUpdate }: { items: Internship[]; onUpdate: (items: Internship[]) => void }) {
   const handleChange = (index: number, key: string, value: unknown) => {
     const arr = [...items];
@@ -345,6 +515,11 @@ function InternshipEditor({ items, onUpdate }: { items: Internship[]; onUpdate: 
             <DatePickerField label="End Date" value={item.endDate} onChange={(v) => handleChange(i, "endDate", v)} />
             <DatePickerField label="Single Date" value={item.singleDate} onChange={(v) => handleChange(i, "singleDate", v)} />
           </div>
+          <div>
+            <Label className="flex items-center gap-1"><Image className="h-3 w-3" /> Thumbnail URL</Label>
+            <Input value={item.thumbnail || ""} onChange={(e) => handleChange(i, "thumbnail", e.target.value)} placeholder="https://image-url.png" />
+            {item.thumbnail && <img src={item.thumbnail} alt="thumb" className="mt-2 h-20 rounded-md border border-border object-cover" />}
+          </div>
           <Button variant="ghost" size="sm" className="text-destructive gap-1" onClick={() => {
             onUpdate(items.filter((_, j) => j !== i));
             toast.success("Experience removed");
@@ -363,7 +538,7 @@ function InternshipEditor({ items, onUpdate }: { items: Internship[]; onUpdate: 
   );
 }
 
-// Project editor with date pickers, demo URL, video URL, images
+// Project editor with date pickers, demo URL, video URL, images, thumbnail
 function ProjectEditor({ items, onUpdate }: { items: Project[]; onUpdate: (items: Project[]) => void }) {
   const handleChange = (index: number, key: string, value: unknown) => {
     const arr = [...items];
@@ -389,6 +564,11 @@ function ProjectEditor({ items, onUpdate }: { items: Project[]; onUpdate: (items
             <DatePickerField label="End Date" value={p.endDate} onChange={(v) => handleChange(i, "endDate", v)} />
             <DatePickerField label="Single Date" value={p.singleDate} onChange={(v) => handleChange(i, "singleDate", v)} />
           </div>
+          <div>
+            <Label className="flex items-center gap-1"><Image className="h-3 w-3" /> Thumbnail URL</Label>
+            <Input value={p.thumbnail || ""} onChange={(e) => handleChange(i, "thumbnail", e.target.value)} placeholder="https://project-screenshot.png" />
+            {p.thumbnail && <img src={p.thumbnail} alt="thumb" className="mt-2 h-24 rounded-md border border-border object-cover" />}
+          </div>
           <div className="border-t border-border pt-3 space-y-3">
             <h4 className="text-sm font-semibold text-foreground flex items-center gap-1"><Video className="h-4 w-4" /> Demo & Media</h4>
             <div><Label>Live Demo URL (iframe)</Label><Input value={p.demoUrl || ""} onChange={(e) => handleChange(i, "demoUrl", e.target.value)} placeholder="https://your-demo.github.io" /></div>
@@ -413,7 +593,7 @@ function ProjectEditor({ items, onUpdate }: { items: Project[]; onUpdate: (items
   );
 }
 
-// Certification editor with certificate URL
+// Certification editor with certificate URL and thumbnail
 function CertificationEditor({ items, onUpdate }: { items: Certification[]; onUpdate: (items: Certification[]) => void }) {
   const handleChange = (index: number, key: string, value: string) => {
     const arr = [...items];
@@ -433,9 +613,13 @@ function CertificationEditor({ items, onUpdate }: { items: Certification[]; onUp
             <Label className="flex items-center gap-1"><Image className="h-3 w-3" /> Certificate Image/URL</Label>
             <Input value={c.certificateUrl || ""} onChange={(e) => handleChange(i, "certificateUrl", e.target.value)} placeholder="https://certificate-image.png" />
           </div>
-          {c.certificateUrl && (
+          <div>
+            <Label className="flex items-center gap-1"><Image className="h-3 w-3" /> Thumbnail URL</Label>
+            <Input value={c.thumbnail || ""} onChange={(e) => handleChange(i, "thumbnail", e.target.value)} placeholder="https://thumbnail.png" />
+          </div>
+          {(c.certificateUrl || c.thumbnail) && (
             <div className="rounded-md overflow-hidden border border-border">
-              <img src={c.certificateUrl} alt={c.title} className="w-full h-32 object-cover" />
+              <img src={c.thumbnail || c.certificateUrl} alt={c.title} className="w-full h-32 object-cover" />
             </div>
           )}
           <Button variant="ghost" size="sm" className="text-destructive gap-1" onClick={() => {
