@@ -21,6 +21,8 @@ export interface Internship {
   thumbnail?: string;
 }
 
+export type ProjectMotivation = "College/Work" | "Personal Interest" | "Hackathon" | "Technical Event" | "Other";
+
 export interface Project {
   id: string;
   title: string;
@@ -35,6 +37,12 @@ export interface Project {
   demoVideoUrl?: string;
   images?: string[];
   thumbnail?: string;
+  keyFeatures?: string[];
+  githubLink?: string;
+  skillsToLearn?: string[];
+  motivation?: ProjectMotivation;
+  motivationOther?: string;
+  screenshots?: string[];
 }
 
 export interface Certification {

@@ -172,11 +172,11 @@ export default function Index() {
                     <div className="p-6 flex flex-col flex-1">
                       <h3 className="text-lg font-semibold text-card-foreground">{p.title}</h3>
                       <p className="mt-2 text-sm text-muted-foreground flex-1">{p.description}</p>
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {p.techStack.map((t) => (
-                          <Badge key={t} variant="outline" className="text-xs">{t}</Badge>
-                        ))}
-                      </div>
+                      {p.demoUrl && (
+                        <a href={p.demoUrl} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1 text-sm text-primary hover:underline">
+                          Try Out / Demo
+                        </a>
+                      )}
                     </div>
                   </div>
                 </AnimatedSection>
