@@ -495,6 +495,7 @@ function SectionEditor<T extends { id: string }>({
 
 // Internship editor with date pickers and thumbnail
 function InternshipEditor({ items, onUpdate }: { items: Internship[]; onUpdate: (items: Internship[]) => void }) {
+  const [deleteIdx, setDeleteIdx] = useState<number | null>(null);
   const handleChange = (index: number, key: string, value: unknown) => {
     const arr = [...items];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -504,6 +505,16 @@ function InternshipEditor({ items, onUpdate }: { items: Internship[]; onUpdate: 
 
   return (
     <div className="space-y-6">
+      <Dialog open={deleteIdx !== null} onOpenChange={(o) => !o && setDeleteIdx(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Delete experience?</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">Are you sure? This action cannot be undone.</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteIdx(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => { onUpdate(items.filter((_, j) => j !== deleteIdx)); setDeleteIdx(null); toast.success("Experience removed"); }}>Delete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {items.map((item, i) => (
         <div key={item.id} className="rounded-lg border border-border bg-card p-5 space-y-3">
           <div><Label>Role</Label><Input value={item.role} onChange={(e) => handleChange(i, "role", e.target.value)} /></div>
@@ -520,10 +531,7 @@ function InternshipEditor({ items, onUpdate }: { items: Internship[]; onUpdate: 
             <Input value={item.thumbnail || ""} onChange={(e) => handleChange(i, "thumbnail", e.target.value)} placeholder="https://image-url.png" />
             {item.thumbnail && <img src={item.thumbnail} alt="thumb" className="mt-2 h-20 rounded-md border border-border object-cover" />}
           </div>
-          <Button variant="ghost" size="sm" className="text-destructive gap-1" onClick={() => {
-            onUpdate(items.filter((_, j) => j !== i));
-            toast.success("Experience removed");
-          }}>
+          <Button variant="ghost" size="sm" className="text-destructive gap-1" onClick={() => setDeleteIdx(i)}>
             <Trash2 className="h-4 w-4" /> Remove
           </Button>
         </div>
@@ -538,8 +546,9 @@ function InternshipEditor({ items, onUpdate }: { items: Internship[]; onUpdate: 
   );
 }
 
-// Project editor with date pickers, demo URL, video URL, images, thumbnail
+// Project editor with all report fields
 function ProjectEditor({ items, onUpdate }: { items: Project[]; onUpdate: (items: Project[]) => void }) {
+  const [deleteIdx, setDeleteIdx] = useState<number | null>(null);
   const handleChange = (index: number, key: string, value: unknown) => {
     const arr = [...items];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -547,14 +556,56 @@ function ProjectEditor({ items, onUpdate }: { items: Project[]; onUpdate: (items
     onUpdate(arr);
   };
 
+  const motivationOptions: Array<{ value: string; label: string }> = [
+    { value: "College/Work", label: "College / Work" },
+    { value: "Personal Interest", label: "Personal Interest" },
+    { value: "Hackathon", label: "Hackathon" },
+    { value: "Technical Event", label: "Technical Event" },
+    { value: "Other", label: "Other" },
+  ];
+
   return (
     <div className="space-y-6">
+      {/* Delete confirmation */}
+      <Dialog open={deleteIdx !== null} onOpenChange={(o) => !o && setDeleteIdx(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Delete project?</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">Are you sure you want to delete this project? This action cannot be undone.</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteIdx(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => { onUpdate(items.filter((_, j) => j !== deleteIdx)); setDeleteIdx(null); toast.success("Project removed"); }}>Delete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {items.map((p, i) => (
         <div key={p.id} className="rounded-lg border border-border bg-card p-5 space-y-3">
           <div><Label>Title</Label><Input value={p.title} onChange={(e) => handleChange(i, "title", e.target.value)} /></div>
           <div><Label>Description</Label><Textarea value={p.description} onChange={(e) => handleChange(i, "description", e.target.value)} rows={3} /></div>
+          <div><Label>Key Features (comma-separated)</Label><Input value={(p.keyFeatures || []).join(", ")} onChange={(e) => handleChange(i, "keyFeatures", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} placeholder="Feature 1, Feature 2" /></div>
           <div><Label>Tech Stack (comma-separated)</Label><Input value={p.techStack.join(", ")} onChange={(e) => handleChange(i, "techStack", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} /></div>
-          <div><Label>Link</Label><Input value={p.link} onChange={(e) => handleChange(i, "link", e.target.value)} /></div>
+          <div><Label>Skills You May Learn (comma-separated)</Label><Input value={(p.skillsToLearn || []).join(", ")} onChange={(e) => handleChange(i, "skillsToLearn", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} placeholder="React, API Design" /></div>
+          <div><Label>Project Link</Label><Input value={p.link} onChange={(e) => handleChange(i, "link", e.target.value)} /></div>
+          <div><Label>GitHub Link</Label><Input value={p.githubLink || ""} onChange={(e) => handleChange(i, "githubLink", e.target.value)} placeholder="https://github.com/..." /></div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <Label>Motivation</Label>
+              <Select value={p.motivation || ""} onValueChange={(v) => handleChange(i, "motivation", v)}>
+                <SelectTrigger><SelectValue placeholder="Select motivation" /></SelectTrigger>
+                <SelectContent>
+                  {motivationOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            {p.motivation === "Other" && (
+              <div>
+                <Label>Specify</Label>
+                <Input value={p.motivationOther || ""} onChange={(e) => handleChange(i, "motivationOther", e.target.value)} placeholder="Your reason..." />
+              </div>
+            )}
+          </div>
+
           <div className="flex items-center gap-2">
             <Switch checked={p.featured} onCheckedChange={(v) => handleChange(i, "featured", v)} />
             <Label>Featured</Label>
@@ -571,14 +622,12 @@ function ProjectEditor({ items, onUpdate }: { items: Project[]; onUpdate: (items
           </div>
           <div className="border-t border-border pt-3 space-y-3">
             <h4 className="text-sm font-semibold text-foreground flex items-center gap-1"><Video className="h-4 w-4" /> Demo & Media</h4>
-            <div><Label>Live Demo URL (iframe)</Label><Input value={p.demoUrl || ""} onChange={(e) => handleChange(i, "demoUrl", e.target.value)} placeholder="https://your-demo.github.io" /></div>
+            <div><Label>Live Demo / Try Out URL</Label><Input value={p.demoUrl || ""} onChange={(e) => handleChange(i, "demoUrl", e.target.value)} placeholder="https://your-demo.github.io" /></div>
             <div><Label>Demo Video URL</Label><Input value={p.demoVideoUrl || ""} onChange={(e) => handleChange(i, "demoVideoUrl", e.target.value)} placeholder="https://youtube.com/embed/..." /></div>
-            <div><Label>Image URLs (comma-separated)</Label><Input value={(p.images || []).join(", ")} onChange={(e) => handleChange(i, "images", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} placeholder="https://img1.png, https://img2.png" /></div>
+            <div><Label>Screenshot URLs (comma-separated)</Label><Input value={(p.screenshots || []).join(", ")} onChange={(e) => handleChange(i, "screenshots", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} placeholder="https://screenshot1.png, https://screenshot2.png" /></div>
+            <div><Label>Additional Image URLs (comma-separated)</Label><Input value={(p.images || []).join(", ")} onChange={(e) => handleChange(i, "images", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} placeholder="https://img1.png, https://img2.png" /></div>
           </div>
-          <Button variant="ghost" size="sm" className="text-destructive gap-1" onClick={() => {
-            onUpdate(items.filter((_, j) => j !== i));
-            toast.success("Project removed");
-          }}>
+          <Button variant="ghost" size="sm" className="text-destructive gap-1" onClick={() => setDeleteIdx(i)}>
             <Trash2 className="h-4 w-4" /> Remove
           </Button>
         </div>
@@ -595,6 +644,7 @@ function ProjectEditor({ items, onUpdate }: { items: Project[]; onUpdate: (items
 
 // Certification editor with certificate URL and thumbnail
 function CertificationEditor({ items, onUpdate }: { items: Certification[]; onUpdate: (items: Certification[]) => void }) {
+  const [deleteIdx, setDeleteIdx] = useState<number | null>(null);
   const handleChange = (index: number, key: string, value: string) => {
     const arr = [...items];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -604,6 +654,16 @@ function CertificationEditor({ items, onUpdate }: { items: Certification[]; onUp
 
   return (
     <div className="space-y-6">
+      <Dialog open={deleteIdx !== null} onOpenChange={(o) => !o && setDeleteIdx(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Delete certification?</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">Are you sure? This action cannot be undone.</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteIdx(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => { onUpdate(items.filter((_, j) => j !== deleteIdx)); setDeleteIdx(null); toast.success("Certification removed"); }}>Delete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {items.map((c, i) => (
         <div key={c.id} className="rounded-lg border border-border bg-card p-5 space-y-3">
           <div><Label>Title</Label><Input value={c.title} onChange={(e) => handleChange(i, "title", e.target.value)} /></div>
@@ -622,10 +682,7 @@ function CertificationEditor({ items, onUpdate }: { items: Certification[]; onUp
               <img src={c.thumbnail || c.certificateUrl} alt={c.title} className="w-full h-32 object-cover" />
             </div>
           )}
-          <Button variant="ghost" size="sm" className="text-destructive gap-1" onClick={() => {
-            onUpdate(items.filter((_, j) => j !== i));
-            toast.success("Certification removed");
-          }}>
+          <Button variant="ghost" size="sm" className="text-destructive gap-1" onClick={() => setDeleteIdx(i)}>
             <Trash2 className="h-4 w-4" /> Remove
           </Button>
         </div>

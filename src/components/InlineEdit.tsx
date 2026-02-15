@@ -25,22 +25,34 @@ export function useInlineData() {
   return { data, save, revision };
 }
 
-// Delete button
+// Delete button with confirmation dialog
 export function DeleteButton({ onDelete, label = "item" }: { onDelete: () => void; label?: string }) {
+  const [open, setOpen] = useState(false);
   if (!isAdmin()) return null;
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      className="text-destructive hover:text-destructive h-8 w-8"
-      onClick={() => {
-        onDelete();
-        toast.success(`${label} removed`);
-      }}
-      title={`Delete ${label}`}
-    >
-      <Trash2 className="h-4 w-4" />
-    </Button>
+    <>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="text-destructive hover:text-destructive h-8 w-8"
+        onClick={() => setOpen(true)}
+        title={`Delete ${label}`}
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete {label}?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">Are you sure you want to delete this {label}? This action cannot be undone.</p>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => { onDelete(); setOpen(false); toast.success(`${label} removed`); }}>Delete</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -124,7 +136,7 @@ export function EditInternshipDialog({
   );
 }
 
-// Project edit dialog
+// Project edit dialog (inline, used on public pages)
 export function EditProjectDialog({
   item,
   onSave,
@@ -148,7 +160,7 @@ export function EditProjectDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{item ? "Edit" : "Add"} Project</DialogTitle>
         </DialogHeader>
@@ -156,7 +168,9 @@ export function EditProjectDialog({
           <div><Label>Title</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
           <div><Label>Description</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} /></div>
           <div><Label>Tech Stack (comma-separated)</Label><Input value={form.techStack.join(", ")} onChange={(e) => setForm({ ...form, techStack: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })} /></div>
-          <div><Label>Link</Label><Input value={form.link} onChange={(e) => setForm({ ...form, link: e.target.value })} /></div>
+          <div><Label>Project Link</Label><Input value={form.link} onChange={(e) => setForm({ ...form, link: e.target.value })} /></div>
+          <div><Label>Demo / Try Out URL</Label><Input value={form.demoUrl || ""} onChange={(e) => setForm({ ...form, demoUrl: e.target.value })} placeholder="https://demo-url.com" /></div>
+          <div><Label>GitHub Link</Label><Input value={form.githubLink || ""} onChange={(e) => setForm({ ...form, githubLink: e.target.value })} placeholder="https://github.com/..." /></div>
           <div className="flex items-center gap-2">
             <Switch checked={form.featured} onCheckedChange={(v) => setForm({ ...form, featured: v })} />
             <Label>Featured</Label>

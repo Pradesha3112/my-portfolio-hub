@@ -118,7 +118,26 @@ export async function generateResume(portfolioUrl?: string) {
   doc.save(`${d.name.replace(/\s+/g, "_")}_Resume.pdf`);
 }
 
-// Generate a single project summary PDF
+// Load image as data URL for embedding in PDF
+async function loadImageAsDataURL(url: string): Promise<{ dataUrl: string; width: number; height: number } | null> {
+  try {
+    return await new Promise((resolve) => {
+      const img = new window.Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        canvas.getContext("2d")!.drawImage(img, 0, 0);
+        resolve({ dataUrl: canvas.toDataURL("image/jpeg", 0.8), width: img.width, height: img.height });
+      };
+      img.onerror = () => resolve(null);
+      img.src = url;
+    });
+  } catch { return null; }
+}
+
+// Generate a detailed project report PDF
 export async function generateProjectPDF(projectId: string) {
   const d = getPortfolioData();
   const p = d.projects.find((proj) => proj.id === projectId);
@@ -126,72 +145,142 @@ export async function generateProjectPDF(projectId: string) {
 
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 15;
+  const contentWidth = pageWidth - margin * 2;
   let y = 20;
 
-  doc.setFontSize(18);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(10, 10, 10);
-  doc.text(p.title, 15, y);
-  y += 10;
-
-  if (p.featured) {
-    doc.setFontSize(9);
-    doc.setTextColor(100, 100, 100);
-    doc.text("★ Featured Project", 15, y);
+  const addSection = (title: string) => {
+    y += 4;
+    doc.setDrawColor(80, 80, 80);
+    doc.line(margin, y, pageWidth - margin, y);
     y += 6;
-  }
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(20, 20, 20);
+    doc.text(title, margin, y);
+    y += 6;
+  };
+
+  const addText = (text: string, size = 9, color: [number, number, number] = [40, 40, 40]) => {
+    doc.setFontSize(size);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...color);
+    const lines = doc.splitTextToSize(text, contentWidth);
+    doc.text(lines, margin, y);
+    y += lines.length * (size * 0.4 + 1);
+  };
+
+  const checkPage = (needed: number) => {
+    if (y + needed > 280) { doc.addPage(); y = 20; }
+  };
 
   const formatDate = (iso?: string) => {
     if (!iso) return "";
     try { return new Date(iso).toLocaleDateString("en-US", { month: "short", year: "numeric" }); } catch { return ""; }
   };
 
+  // === Title ===
+  doc.setFontSize(20);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(10, 10, 10);
+  doc.text(p.title, margin, y);
+  y += 10;
+
+  // === Date ===
   const dates = [p.startDate && formatDate(p.startDate), p.endDate && formatDate(p.endDate)].filter(Boolean).join(" – ") || (p.singleDate ? formatDate(p.singleDate) : "");
   if (dates) {
     doc.setFontSize(9);
     doc.setTextColor(100, 100, 100);
-    doc.text(dates, 15, y);
-    y += 8;
+    doc.text(`Date: ${dates}`, margin, y);
+    y += 6;
   }
 
-  doc.setDrawColor(80, 80, 80);
-  doc.line(15, y, pageWidth - 15, y);
-  y += 8;
+  if (p.featured) {
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.text("★ Featured Project", margin, y);
+    y += 6;
+  }
 
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(40, 40, 40);
-  const lines = doc.splitTextToSize(p.description, pageWidth - 30);
-  doc.text(lines, 15, y);
-  y += lines.length * 5 + 6;
+  // === Thumbnail ===
+  if (p.thumbnail) {
+    checkPage(60);
+    const imgData = await loadImageAsDataURL(p.thumbnail);
+    if (imgData) {
+      const maxW = contentWidth;
+      const maxH = 50;
+      const ratio = Math.min(maxW / imgData.width, maxH / imgData.height);
+      const w = imgData.width * ratio;
+      const h = imgData.height * ratio;
+      doc.addImage(imgData.dataUrl, "JPEG", margin, y, w, h);
+      y += h + 4;
+    }
+  }
 
+  // === Description ===
+  addSection("Description");
+  addText(p.description);
+
+  // === Key Features ===
+  if (p.keyFeatures && p.keyFeatures.length > 0) {
+    checkPage(20);
+    addSection("Key Features");
+    p.keyFeatures.forEach((f) => { addText(`• ${f}`); });
+  }
+
+  // === Tech Stack ===
   if (p.techStack.length > 0) {
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.text("Tech Stack:", 15, y);
-    y += 5;
-    doc.setFont("helvetica", "normal");
-    doc.text(p.techStack.join(", "), 15, y);
-    y += 8;
+    checkPage(15);
+    addSection("Tech Stack");
+    addText(p.techStack.join(", "));
   }
 
-  if (p.link) {
-    doc.setFontSize(9);
-    doc.setTextColor(0, 100, 200);
-    doc.text(`Link: ${p.link}`, 15, y);
-    y += 6;
+  // === Skills You May Learn ===
+  if (p.skillsToLearn && p.skillsToLearn.length > 0) {
+    checkPage(15);
+    addSection("Skills You May Learn");
+    addText(p.skillsToLearn.join(", "));
   }
 
-  if (p.demoUrl) {
-    doc.setFontSize(9);
-    doc.setTextColor(0, 100, 200);
-    doc.text(`Live Demo: ${p.demoUrl}`, 15, y);
-    y += 6;
+  // === Motivation ===
+  if (p.motivation) {
+    checkPage(15);
+    addSection("Motivation / Reason");
+    const motText = p.motivation === "Other" && p.motivationOther ? p.motivationOther : p.motivation;
+    addText(motText);
   }
 
+  // === Links ===
+  checkPage(25);
+  addSection("Links");
+  if (p.demoUrl) { addText(`Demo / Try Out: ${p.demoUrl}`, 9, [0, 80, 180]); }
+  if (p.link) { addText(`Project Link: ${p.link}`, 9, [0, 80, 180]); }
+  if (p.githubLink) { addText(`GitHub: ${p.githubLink}`, 9, [0, 80, 180]); }
+
+  // === Screenshots ===
+  const screenshots = [...(p.screenshots || []), ...(p.images || [])];
+  if (screenshots.length > 0) {
+    checkPage(20);
+    addSection("Screenshots");
+    for (const url of screenshots) {
+      checkPage(60);
+      const imgData = await loadImageAsDataURL(url);
+      if (imgData) {
+        const maxW = contentWidth;
+        const maxH = 55;
+        const ratio = Math.min(maxW / imgData.width, maxH / imgData.height);
+        const w = imgData.width * ratio;
+        const h = imgData.height * ratio;
+        doc.addImage(imgData.dataUrl, "JPEG", margin, y, w, h);
+        y += h + 4;
+      }
+    }
+  }
+
+  // Footer
   doc.setFontSize(7);
   doc.setTextColor(150, 150, 150);
-  doc.text(`Generated from ${d.name}'s Portfolio`, 15, 285);
+  doc.text(`Generated from ${d.name}'s Portfolio`, margin, 285);
 
-  doc.save(`${p.title.replace(/\s+/g, "_")}_Summary.pdf`);
+  doc.save(`${p.title.replace(/\s+/g, "_")}_Report.pdf`);
 }
