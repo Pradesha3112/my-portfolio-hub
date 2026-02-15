@@ -18,6 +18,7 @@ export interface Internship {
   startDate?: string;
   endDate?: string;
   singleDate?: string;
+  thumbnail?: string;
 }
 
 export interface Project {
@@ -33,6 +34,7 @@ export interface Project {
   demoUrl?: string;
   demoVideoUrl?: string;
   images?: string[];
+  thumbnail?: string;
 }
 
 export interface Certification {
@@ -41,9 +43,15 @@ export interface Certification {
   platform: string;
   date: string;
   certificateUrl?: string;
+  thumbnail?: string;
 }
 
-// Certification is now defined above with Project
+export interface ResumeSelections {
+  selectedProjects: string[];
+  selectedInternships: string[];
+  selectedCertifications: string[];
+  selectedSkillCategories: ("languages" | "tools" | "platforms" | "other")[];
+}
 
 export interface PortfolioData {
   name: string;
@@ -64,6 +72,7 @@ export interface PortfolioData {
   projects: Project[];
   certifications: Certification[];
   achievements: string[];
+  resumeSelections: ResumeSelections;
   lastEdited: string;
 }
 
@@ -158,6 +167,12 @@ const defaultData: PortfolioData = {
     "GPA 8.27 in B.Tech Information Technology",
     "87.3% in Higher Secondary (Computer Science – Mathematics)",
   ],
+  resumeSelections: {
+    selectedProjects: [],
+    selectedInternships: [],
+    selectedCertifications: [],
+    selectedSkillCategories: ["languages", "tools", "platforms", "other"],
+  },
   lastEdited: new Date().toISOString(),
 };
 
@@ -168,7 +183,12 @@ export function getPortfolioData(): PortfolioData {
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored) {
     try {
-      return JSON.parse(stored);
+      const parsed = JSON.parse(stored);
+      // Ensure resumeSelections exists for older data
+      if (!parsed.resumeSelections) {
+        parsed.resumeSelections = defaultData.resumeSelections;
+      }
+      return parsed;
     } catch {
       return defaultData;
     }
@@ -177,7 +197,6 @@ export function getPortfolioData(): PortfolioData {
 }
 
 export function savePortfolioData(data: PortfolioData) {
-  // Save current as history before updating
   const current = localStorage.getItem(STORAGE_KEY);
   if (current) {
     localStorage.setItem(HISTORY_KEY, current);
@@ -204,4 +223,35 @@ export function resetToDefault(): PortfolioData {
 
 export function generateId(): string {
   return Math.random().toString(36).substring(2, 9);
+}
+
+// Get items for resume respecting selections and limits
+export function getResumeItems(data: PortfolioData) {
+  const sel = data.resumeSelections;
+
+  // Projects: use selected, fallback to featured/first, max 3
+  let projects = sel.selectedProjects.length > 0
+    ? data.projects.filter((p) => sel.selectedProjects.includes(p.id))
+    : data.projects.filter((p) => p.featured);
+  if (projects.length === 0) projects = [...data.projects];
+  projects = projects.slice(0, 3);
+
+  // Internships: use selected, fallback to first, max 2
+  let internships = sel.selectedInternships.length > 0
+    ? data.internships.filter((i) => sel.selectedInternships.includes(i.id))
+    : [...data.internships];
+  internships = internships.slice(0, 2);
+
+  // Certifications: use selected, fallback to first, max 4
+  let certifications = sel.selectedCertifications.length > 0
+    ? data.certifications.filter((c) => sel.selectedCertifications.includes(c.id))
+    : [...data.certifications];
+  certifications = certifications.slice(0, 4);
+
+  // Skills: use selected categories
+  const skillCategories = sel.selectedSkillCategories.length > 0
+    ? sel.selectedSkillCategories
+    : (["languages", "tools", "platforms", "other"] as const);
+
+  return { projects, internships, certifications, skillCategories };
 }

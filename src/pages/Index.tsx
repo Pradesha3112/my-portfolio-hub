@@ -163,13 +163,20 @@ export default function Index() {
             <div className="grid gap-6 md:grid-cols-3">
               {featured.map((p, i) => (
                 <AnimatedSection key={p.id} delay={i * 150}>
-                  <div className="rounded-lg border border-border bg-card p-6 hover:shadow-md transition-shadow h-full flex flex-col">
-                    <h3 className="text-lg font-semibold text-card-foreground">{p.title}</h3>
-                    <p className="mt-2 text-sm text-muted-foreground flex-1">{p.description}</p>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {p.techStack.map((t) => (
-                        <Badge key={t} variant="outline" className="text-xs">{t}</Badge>
-                      ))}
+                  <div className="rounded-lg border border-border bg-card hover:shadow-md transition-shadow h-full flex flex-col overflow-hidden">
+                    {(p.thumbnail || (p.images && p.images.length > 0)) && (
+                      <div className="w-full h-40 overflow-hidden">
+                        <img src={p.thumbnail || p.images![0]} alt={p.title} className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                    <div className="p-6 flex flex-col flex-1">
+                      <h3 className="text-lg font-semibold text-card-foreground">{p.title}</h3>
+                      <p className="mt-2 text-sm text-muted-foreground flex-1">{p.description}</p>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {p.techStack.map((t) => (
+                          <Badge key={t} variant="outline" className="text-xs">{t}</Badge>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </AnimatedSection>
