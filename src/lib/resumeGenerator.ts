@@ -12,10 +12,10 @@ export async function generateResume(portfolioUrl?: string) {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const marginLeft = 14;
-  const marginRight = 14;
-  const contentWidth = pageWidth - marginLeft - marginRight;
-  let y = 12;
+  const mL = 16; // left margin
+  const mR = 16; // right margin
+  const cW = pageWidth - mL - mR; // content width
+  let y = 18;
 
   // ── Helpers ──
   const setFont = (size: number, bold = false, color: [number, number, number] = [30, 30, 30]) => {
@@ -24,38 +24,31 @@ export async function generateResume(portfolioUrl?: string) {
     doc.setTextColor(...color);
   };
 
-  const addLine = (text: string, size = 8.5, bold = false, color: [number, number, number] = [30, 30, 30], x = marginLeft) => {
-    setFont(size, bold, color);
-    doc.text(text, x, y);
-    y += size * 0.4 + 1.2;
-  };
-
-  const addWrapped = (text: string, size = 8, indent = marginLeft, maxWidth = contentWidth) => {
-    setFont(size, false, [50, 50, 50]);
-    const lines = doc.splitTextToSize(text, maxWidth);
+  const addWrapped = (text: string, size: number, indent: number, maxW: number, color: [number, number, number] = [45, 45, 45]) => {
+    setFont(size, false, color);
+    const lines = doc.splitTextToSize(text, maxW);
     doc.text(lines, indent, y);
-    y += lines.length * (size * 0.36 + 0.9);
+    y += lines.length * (size * 0.45 + 1);
   };
 
-  const addBullet = (text: string, size = 8, indent = marginLeft) => {
-    setFont(size, false, [50, 50, 50]);
-    const bulletX = indent;
-    const textX = indent + 4;
-    const lines = doc.splitTextToSize(text, contentWidth - 4);
-    doc.text("•", bulletX, y);
+  const addBullet = (text: string, size: number, indent = mL) => {
+    setFont(size, false, [45, 45, 45]);
+    const textX = indent + 5;
+    const lines = doc.splitTextToSize(text, cW - 5);
+    doc.text("•", indent + 1, y);
     doc.text(lines, textX, y);
-    y += lines.length * (size * 0.36 + 0.9);
+    y += lines.length * (size * 0.45 + 1);
   };
 
   const addSectionHeader = (title: string) => {
-    y += 3;
-    doc.setDrawColor(50, 50, 50);
-    doc.setLineWidth(0.4);
-    doc.line(marginLeft, y, pageWidth - marginRight, y);
-    y += 4.5;
-    setFont(10, true, [15, 15, 15]);
-    doc.text(title.toUpperCase(), marginLeft, y);
     y += 5;
+    doc.setDrawColor(40, 40, 40);
+    doc.setLineWidth(0.5);
+    doc.line(mL, y, pageWidth - mR, y);
+    y += 6;
+    setFont(11.5, true, [10, 10, 10]);
+    doc.text(title.toUpperCase(), mL, y);
+    y += 7;
   };
 
   const formatDate = (iso?: string) => {
@@ -64,40 +57,33 @@ export async function generateResume(portfolioUrl?: string) {
     catch { return ""; }
   };
 
-  const addLink = (label: string, url: string) => {
-    if (!url) return;
-    setFont(7.5, false, [0, 70, 160]);
-    doc.textWithLink(`${label}: ${url}`, marginLeft + 4, y, { url });
-    y += 3.5;
-  };
-
   // ════════════════════════════════════════════
   // 1. NAME & CONTACT
   // ════════════════════════════════════════════
-  setFont(16, true, [10, 10, 10]);
-  doc.text(d.name, marginLeft, y);
-  y += 6;
+  setFont(22, true, [10, 10, 10]);
+  doc.text(d.name, mL, y);
+  y += 8;
 
-  setFont(9, false, [70, 70, 70]);
-  doc.text(d.role, marginLeft, y);
-  y += 4.5;
+  setFont(11, false, [60, 60, 60]);
+  doc.text(d.role, mL, y);
+  y += 6;
 
   // Contact line
   const contactParts: string[] = [];
   if (d.email) contactParts.push(d.email);
   if (d.linkedin) contactParts.push(`LinkedIn: ${d.linkedin}`);
   if (d.github) contactParts.push(`GitHub: ${d.github}`);
-  setFont(7, false, [90, 90, 90]);
+  setFont(8, false, [80, 80, 80]);
   const contactText = contactParts.join("  |  ");
-  const contactLines = doc.splitTextToSize(contactText, contentWidth);
-  doc.text(contactLines, marginLeft, y);
-  y += contactLines.length * 3.2;
+  const contactLines = doc.splitTextToSize(contactText, cW);
+  doc.text(contactLines, mL, y);
+  y += contactLines.length * 4;
 
   // ════════════════════════════════════════════
   // 2. PROFESSIONAL SUMMARY
   // ════════════════════════════════════════════
   addSectionHeader("Professional Summary");
-  addWrapped(d.intro, 8);
+  addWrapped(d.intro, 9.5, mL, cW);
 
   // ════════════════════════════════════════════
   // 3. TECHNICAL SKILLS (bullet points)
@@ -110,50 +96,50 @@ export async function generateResume(portfolioUrl?: string) {
     const skills = d.skills[cat];
     if (skills && skills.length > 0) {
       const catLabel = cat.charAt(0).toUpperCase() + cat.slice(1);
-      addBullet(`${catLabel}: ${skills.map(formatSkill).join(", ")}`, 8);
+      addBullet(`${catLabel}: ${skills.map(formatSkill).join(", ")}`, 9);
+      y += 1;
     }
   });
 
   // ════════════════════════════════════════════
-  // 4. PROJECTS (with links)
+  // 4. PROJECTS (with links below title)
   // ════════════════════════════════════════════
   if (projects.length > 0) {
     addSectionHeader("Projects");
     projects.forEach((p, idx) => {
-      // Project title
-      setFont(9, true, [20, 20, 20]);
+      // Project title (bold) + date right-aligned
+      setFont(10.5, true, [15, 15, 15]);
       const titleText = `${p.title}${p.featured ? "  ★" : ""}`;
-      doc.text(titleText, marginLeft, y);
-      // Date on the right
+      doc.text(titleText, mL, y);
       const pDates = [p.startDate && formatDate(p.startDate), p.endDate && formatDate(p.endDate)].filter(Boolean).join(" – ") || (p.singleDate ? formatDate(p.singleDate) : "");
       if (pDates) {
-        setFont(7, false, [100, 100, 100]);
-        doc.text(pDates, pageWidth - marginRight, y, { align: "right" });
+        setFont(8, false, [90, 90, 90]);
+        doc.text(pDates, pageWidth - mR, y, { align: "right" });
       }
-      y += 4;
+      y += 5;
 
-      // Links row
+      // Links row (GitHub / Demo) in blue
       if (p.githubLink || p.demoUrl || p.link) {
         const linkParts: string[] = [];
         if (p.githubLink) linkParts.push(`GitHub: ${p.githubLink}`);
-        if (p.demoUrl) linkParts.push(`Demo: ${p.demoUrl}`);
+        if (p.demoUrl) linkParts.push(`Live Demo: ${p.demoUrl}`);
         else if (p.link) linkParts.push(`Link: ${p.link}`);
-        setFont(7, false, [0, 70, 160]);
-        doc.text(linkParts.join("  |  "), marginLeft + 4, y);
-        y += 3.2;
+        setFont(8, false, [0, 60, 150]);
+        doc.text(linkParts.join("   |   "), mL + 3, y);
+        y += 4.5;
       }
 
       // Description
-      addWrapped(p.description, 8, marginLeft + 4, contentWidth - 4);
+      addWrapped(p.description, 9, mL + 3, cW - 3);
 
       // Tech stack
       if (p.techStack.length > 0) {
-        setFont(7, false, [90, 90, 90]);
-        doc.text(`Tech: ${p.techStack.join(", ")}`, marginLeft + 4, y);
-        y += 3;
+        setFont(8, false, [80, 80, 80]);
+        doc.text(`Tech: ${p.techStack.join(", ")}`, mL + 3, y);
+        y += 4;
       }
 
-      if (idx < projects.length - 1) y += 2;
+      if (idx < projects.length - 1) y += 3;
     });
   }
 
@@ -163,17 +149,17 @@ export async function generateResume(portfolioUrl?: string) {
   if (internships.length > 0) {
     addSectionHeader("Training / Internships");
     internships.forEach((e, idx) => {
-      setFont(9, true, [20, 20, 20]);
-      doc.text(`${e.role} — ${e.organization}`, marginLeft, y);
+      setFont(10.5, true, [15, 15, 15]);
+      doc.text(`${e.role} — ${e.organization}`, mL, y);
       const dates = [e.startDate && formatDate(e.startDate), e.endDate && formatDate(e.endDate)].filter(Boolean).join(" – ") || (e.singleDate ? formatDate(e.singleDate) : "");
       const durationStr = dates || e.duration;
       if (durationStr) {
-        setFont(7, false, [100, 100, 100]);
-        doc.text(durationStr, pageWidth - marginRight, y, { align: "right" });
+        setFont(8, false, [90, 90, 90]);
+        doc.text(durationStr, pageWidth - mR, y, { align: "right" });
       }
-      y += 4;
-      addWrapped(e.responsibilities, 8, marginLeft + 4, contentWidth - 4);
-      if (idx < internships.length - 1) y += 1.5;
+      y += 5;
+      addWrapped(e.responsibilities, 9, mL + 3, cW - 3);
+      if (idx < internships.length - 1) y += 2;
     });
   }
 
@@ -183,22 +169,23 @@ export async function generateResume(portfolioUrl?: string) {
   if (certifications.length > 0) {
     addSectionHeader("Certificates");
     certifications.forEach((c) => {
-      addBullet(`${c.title} — ${c.platform}${c.date ? ` (${c.date})` : ""}`, 8);
+      addBullet(`${c.title} — ${c.platform}${c.date ? ` (${c.date})` : ""}`, 9);
+      y += 1;
     });
   }
 
   // ════════════════════════════════════════════
-  // QR Code (bottom-right, small)
+  // QR Code (bottom-right corner)
   // ════════════════════════════════════════════
   const url = portfolioUrl || window.location.origin;
   try {
     const qrDataUrl = await generateQRDataURL(url);
-    doc.setFontSize(5.5);
-    doc.setTextColor(130, 130, 130);
-    doc.text("Portfolio:", pageWidth - 30, pageHeight - 18);
-    doc.addImage(qrDataUrl, "PNG", pageWidth - 28, pageHeight - 17, 14, 14);
+    doc.setFontSize(6);
+    doc.setTextColor(120, 120, 120);
+    doc.text("Portfolio:", pageWidth - 32, pageHeight - 20);
+    doc.addImage(qrDataUrl, "PNG", pageWidth - 30, pageHeight - 19, 16, 16);
   } catch {
-    // QR generation failed, skip
+    // skip
   }
 
   doc.save(`${d.name.replace(/\s+/g, "_")}_Resume.pdf`);
