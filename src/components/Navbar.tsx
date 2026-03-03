@@ -8,10 +8,8 @@ import { toast } from "sonner";
 
 const anchorLinks = [
   { id: "home", label: "Home" },
-  { id: "education", label: "Education" },
   { id: "skills", label: "Skills" },
   { id: "certifications", label: "Certifications" },
-  { id: "contact", label: "Contact" },
 ];
 
 const pageLinks = [
