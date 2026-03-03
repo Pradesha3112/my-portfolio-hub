@@ -12,14 +12,14 @@ export async function generateResume(portfolioUrl?: string) {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth(); // 210mm
   const pageHeight = doc.internal.pageSize.getHeight(); // 297mm
-  // ~0.75 inch margins (19mm) for balanced look
-  const mL = 18;
-  const mR = 18;
-  const cW = pageWidth - mL - mR; // ~174mm usable width
-  let y = 20;
+  // ~0.7 inch margins (18mm) — maximise content width
+  const mL = 15;
+  const mR = 15;
+  const cW = pageWidth - mL - mR; // ~180mm usable width
+  let y = 18;
 
-  // Line height multiplier ~1.15-1.2x
-  const lh = (size: number) => size * 0.55;
+  // Line height multiplier ~1.2x for readability
+  const lh = (size: number) => size * 0.5;
 
   const setFont = (size: number, bold = false, color: [number, number, number] = [20, 20, 20]) => {
     doc.setFontSize(size);
@@ -51,14 +51,14 @@ export async function generateResume(portfolioUrl?: string) {
   };
 
   const addSectionHeader = (title: string) => {
-    y += 7;
-    doc.setDrawColor(30, 30, 30);
-    doc.setLineWidth(0.6);
+    y += 6;
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.8);
     doc.line(mL, y, pageWidth - mR, y);
-    y += 7;
-    setFont(13, true, [10, 10, 10]);
+    y += 6;
+    setFont(14, true, [0, 0, 0]);
     doc.text(title.toUpperCase(), mL, y);
-    y += 8;
+    y += 7;
   };
 
   const formatDate = (iso?: string) => {
@@ -70,33 +70,33 @@ export async function generateResume(portfolioUrl?: string) {
   // ════════════════════════════════════════════
   // 1. NAME & CONTACT (Name: 18pt, Role: 12pt)
   // ════════════════════════════════════════════
-  setFont(18, true, [5, 5, 5]);
+  setFont(20, true, [0, 0, 0]);
   doc.text(d.name, mL, y);
   y += 8;
 
-  setFont(12, false, [50, 50, 50]);
+  setFont(12, false, [40, 40, 40]);
   doc.text(d.role, mL, y);
-  y += 7;
+  y += 6;
 
   // Contact info
   const contactParts: string[] = [];
   if (d.email) contactParts.push(d.email);
   if (d.linkedin) contactParts.push(`LinkedIn: ${d.linkedin}`);
   if (d.github) contactParts.push(`GitHub: ${d.github}`);
-  setFont(9, false, [70, 70, 70]);
-  const contactText = contactParts.join("   |   ");
-  const contactLines = doc.splitTextToSize(contactText, cW);
+  setFont(9.5, false, [60, 60, 60]);
+  const contactText = contactParts.join("  |  ");
+  const contactLines = doc.splitTextToSize(contactText, cW - 22);
   doc.text(contactLines, mL, y);
   y += contactLines.length * 5;
 
-  // QR code next to contact area (top-right)
+  // QR code top-right near name
   const url = portfolioUrl || window.location.origin;
   try {
     const qrDataUrl = await generateQRDataURL(url);
-    doc.addImage(qrDataUrl, "PNG", pageWidth - mR - 18, 18, 18, 18);
-    doc.setFontSize(6);
-    doc.setTextColor(110, 110, 110);
-    doc.text("Scan for Portfolio", pageWidth - mR - 18, 38);
+    doc.addImage(qrDataUrl, "PNG", pageWidth - mR - 16, 14, 16, 16);
+    doc.setFontSize(5.5);
+    doc.setTextColor(100, 100, 100);
+    doc.text("Portfolio", pageWidth - mR - 16, 32);
   } catch {
     // skip
   }
@@ -111,15 +111,19 @@ export async function generateResume(portfolioUrl?: string) {
   // 3. TECHNICAL SKILLS (11pt, bullet w/ bold label)
   // ════════════════════════════════════════════
   addSectionHeader("Technical Skills");
-  const levels = d.skillLevels || {};
-  const formatSkill = (s: string) => levels[s] ? `${s} (${levels[s]})` : s;
+
+  const catLabels: Record<string, string> = {
+    languages: "Languages",
+    tools: "Tools",
+    platforms: "Platforms",
+    other: "Other Skills",
+  };
 
   skillCategories.forEach((cat) => {
     const skills = d.skills[cat];
     if (skills && skills.length > 0) {
-      const catLabel = cat.charAt(0).toUpperCase() + cat.slice(1);
-      addBullet(catLabel, skills.map(formatSkill).join(", "), 11);
-      y += 1.5;
+      addBullet(catLabels[cat] || cat, skills.join(", "), 11);
+      y += 1;
     }
   });
 
@@ -130,39 +134,52 @@ export async function generateResume(portfolioUrl?: string) {
     addSectionHeader("Projects");
     projects.forEach((p, idx) => {
       // Bold project title
-      setFont(12, true, [10, 10, 10]);
-      const titleText = p.title;
-      doc.text(titleText, mL, y);
+      setFont(12, true, [0, 0, 0]);
+      doc.text(p.title, mL, y);
       // Date right-aligned
       const pDates = [p.startDate && formatDate(p.startDate), p.endDate && formatDate(p.endDate)].filter(Boolean).join(" – ") || (p.singleDate ? formatDate(p.singleDate) : "");
       if (pDates) {
         setFont(9, false, [80, 80, 80]);
         doc.text(pDates, pageWidth - mR, y, { align: "right" });
       }
-      y += 6;
+      y += 5;
 
       // Links (GitHub / Live Demo) in blue
       if (p.githubLink || p.demoUrl || p.link) {
-        const linkParts: string[] = [];
-        if (p.githubLink) linkParts.push(`GitHub: ${p.githubLink}`);
-        if (p.demoUrl) linkParts.push(`Live Demo: ${p.demoUrl}`);
-        else if (p.link) linkParts.push(`Link: ${p.link}`);
-        setFont(9, false, [0, 50, 140]);
-        doc.text(linkParts.join("   |   "), mL + 2, y);
-        y += 5;
+        if (p.githubLink) {
+          setFont(9, false, [0, 50, 140]);
+          doc.text(`GitHub: ${p.githubLink}`, mL + 4, y);
+          y += 4;
+        }
+        if (p.demoUrl) {
+          setFont(9, false, [0, 50, 140]);
+          doc.text(`Live Demo: ${p.demoUrl}`, mL + 4, y);
+          y += 4;
+        } else if (p.link) {
+          setFont(9, false, [0, 50, 140]);
+          doc.text(`Link: ${p.link}`, mL + 4, y);
+          y += 4;
+        }
       }
 
-      // Description
-      addWrapped(p.description, 11, mL + 2, cW - 2);
+      // Description as bullet points (split sentences)
+      const descBullets = p.description.split(/\.\s*/).filter(s => s.trim().length > 0);
+      descBullets.forEach((bullet) => {
+        setFont(11, false, [30, 30, 30]);
+        const text = `• ${bullet.trim().replace(/\.$/, "")}`;
+        const lines = doc.splitTextToSize(text, cW - 6);
+        doc.text(lines, mL + 4, y);
+        y += lines.length * lh(11);
+      });
 
       // Tech stack
       if (p.techStack.length > 0) {
-        setFont(9, false, [70, 70, 70]);
-        doc.text(`Tech Stack: ${p.techStack.join(", ")}`, mL + 2, y);
-        y += 5;
+        setFont(9, true, [60, 60, 60]);
+        doc.text(`Tech: ${p.techStack.join(", ")}`, mL + 4, y);
+        y += 4;
       }
 
-      if (idx < projects.length - 1) y += 4;
+      if (idx < projects.length - 1) y += 3;
     });
   }
 
