@@ -12,32 +12,50 @@ export async function generateResume(portfolioUrl?: string) {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  let y = 14;
+  const marginLeft = 14;
+  const marginRight = 14;
+  const contentWidth = pageWidth - marginLeft - marginRight;
+  let y = 12;
 
-  const addLine = (text: string, size = 9, bold = false, color: [number, number, number] = [30, 30, 30]) => {
+  // ── Helpers ──
+  const setFont = (size: number, bold = false, color: [number, number, number] = [30, 30, 30]) => {
     doc.setFontSize(size);
     doc.setFont("helvetica", bold ? "bold" : "normal");
     doc.setTextColor(...color);
-    doc.text(text, 14, y);
-    y += size * 0.42 + 1.5;
   };
 
-  const addWrapped = (text: string, size = 8, maxWidth = pageWidth - 28) => {
-    doc.setFontSize(size);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(60, 60, 60);
+  const addLine = (text: string, size = 8.5, bold = false, color: [number, number, number] = [30, 30, 30], x = marginLeft) => {
+    setFont(size, bold, color);
+    doc.text(text, x, y);
+    y += size * 0.4 + 1.2;
+  };
+
+  const addWrapped = (text: string, size = 8, indent = marginLeft, maxWidth = contentWidth) => {
+    setFont(size, false, [50, 50, 50]);
     const lines = doc.splitTextToSize(text, maxWidth);
-    doc.text(lines, 14, y);
-    y += lines.length * (size * 0.38 + 1);
+    doc.text(lines, indent, y);
+    y += lines.length * (size * 0.36 + 0.9);
+  };
+
+  const addBullet = (text: string, size = 8, indent = marginLeft) => {
+    setFont(size, false, [50, 50, 50]);
+    const bulletX = indent;
+    const textX = indent + 4;
+    const lines = doc.splitTextToSize(text, contentWidth - 4);
+    doc.text("•", bulletX, y);
+    doc.text(lines, textX, y);
+    y += lines.length * (size * 0.36 + 0.9);
   };
 
   const addSectionHeader = (title: string) => {
-    y += 2;
-    doc.setDrawColor(80, 80, 80);
-    doc.line(14, y, pageWidth - 14, y);
-    y += 4;
-    addLine(title, 10, true, [20, 20, 20]);
-    y += 1;
+    y += 3;
+    doc.setDrawColor(50, 50, 50);
+    doc.setLineWidth(0.4);
+    doc.line(marginLeft, y, pageWidth - marginRight, y);
+    y += 4.5;
+    setFont(10, true, [15, 15, 15]);
+    doc.text(title.toUpperCase(), marginLeft, y);
+    y += 5;
   };
 
   const formatDate = (iso?: string) => {
@@ -46,71 +64,139 @@ export async function generateResume(portfolioUrl?: string) {
     catch { return ""; }
   };
 
-  // === NAME & CONTACT ===
-  addLine(d.name, 18, true, [10, 10, 10]);
-  addLine(d.role, 10, false, [80, 80, 80]);
-  y += 1;
-  addLine(`${d.email}  |  LinkedIn: ${d.linkedin}  |  GitHub: ${d.github}`, 7, false, [100, 100, 100]);
+  const addLink = (label: string, url: string) => {
+    if (!url) return;
+    setFont(7.5, false, [0, 70, 160]);
+    doc.textWithLink(`${label}: ${url}`, marginLeft + 4, y, { url });
+    y += 3.5;
+  };
 
-  // === PROFESSIONAL SUMMARY ===
-  addSectionHeader("PROFESSIONAL SUMMARY");
+  // ════════════════════════════════════════════
+  // 1. NAME & CONTACT
+  // ════════════════════════════════════════════
+  setFont(16, true, [10, 10, 10]);
+  doc.text(d.name, marginLeft, y);
+  y += 6;
+
+  setFont(9, false, [70, 70, 70]);
+  doc.text(d.role, marginLeft, y);
+  y += 4.5;
+
+  // Contact line
+  const contactParts: string[] = [];
+  if (d.email) contactParts.push(d.email);
+  if (d.linkedin) contactParts.push(`LinkedIn: ${d.linkedin}`);
+  if (d.github) contactParts.push(`GitHub: ${d.github}`);
+  setFont(7, false, [90, 90, 90]);
+  const contactText = contactParts.join("  |  ");
+  const contactLines = doc.splitTextToSize(contactText, contentWidth);
+  doc.text(contactLines, marginLeft, y);
+  y += contactLines.length * 3.2;
+
+  // ════════════════════════════════════════════
+  // 2. PROFESSIONAL SUMMARY
+  // ════════════════════════════════════════════
+  addSectionHeader("Professional Summary");
   addWrapped(d.intro, 8);
 
-  // === TECHNICAL SKILLS ===
-  addSectionHeader("TECHNICAL SKILLS");
+  // ════════════════════════════════════════════
+  // 3. TECHNICAL SKILLS (bullet points)
+  // ════════════════════════════════════════════
+  addSectionHeader("Technical Skills");
   const levels = d.skillLevels || {};
   const formatSkill = (s: string) => levels[s] ? `${s} (${levels[s]})` : s;
 
   skillCategories.forEach((cat) => {
     const skills = d.skills[cat];
-    if (skills.length > 0) {
+    if (skills && skills.length > 0) {
       const catLabel = cat.charAt(0).toUpperCase() + cat.slice(1);
-      addLine(`${catLabel}: ${skills.map(formatSkill).join(", ")}`, 8);
+      addBullet(`${catLabel}: ${skills.map(formatSkill).join(", ")}`, 8);
     }
   });
 
-  // === PROJECTS ===
+  // ════════════════════════════════════════════
+  // 4. PROJECTS (with links)
+  // ════════════════════════════════════════════
   if (projects.length > 0) {
-    addSectionHeader("PROJECTS");
-    projects.forEach((p) => {
-      addLine(`${p.title}${p.featured ? " ★" : ""}`, 9, true);
+    addSectionHeader("Projects");
+    projects.forEach((p, idx) => {
+      // Project title
+      setFont(9, true, [20, 20, 20]);
+      const titleText = `${p.title}${p.featured ? "  ★" : ""}`;
+      doc.text(titleText, marginLeft, y);
+      // Date on the right
       const pDates = [p.startDate && formatDate(p.startDate), p.endDate && formatDate(p.endDate)].filter(Boolean).join(" – ") || (p.singleDate ? formatDate(p.singleDate) : "");
-      if (pDates) addLine(pDates, 7, false, [100, 100, 100]);
-      addWrapped(p.description, 8);
-      if (p.techStack.length > 0) addLine(`Tech: ${p.techStack.join(", ")}`, 7, false, [100, 100, 100]);
-      y += 1;
+      if (pDates) {
+        setFont(7, false, [100, 100, 100]);
+        doc.text(pDates, pageWidth - marginRight, y, { align: "right" });
+      }
+      y += 4;
+
+      // Links row
+      if (p.githubLink || p.demoUrl || p.link) {
+        const linkParts: string[] = [];
+        if (p.githubLink) linkParts.push(`GitHub: ${p.githubLink}`);
+        if (p.demoUrl) linkParts.push(`Demo: ${p.demoUrl}`);
+        else if (p.link) linkParts.push(`Link: ${p.link}`);
+        setFont(7, false, [0, 70, 160]);
+        doc.text(linkParts.join("  |  "), marginLeft + 4, y);
+        y += 3.2;
+      }
+
+      // Description
+      addWrapped(p.description, 8, marginLeft + 4, contentWidth - 4);
+
+      // Tech stack
+      if (p.techStack.length > 0) {
+        setFont(7, false, [90, 90, 90]);
+        doc.text(`Tech: ${p.techStack.join(", ")}`, marginLeft + 4, y);
+        y += 3;
+      }
+
+      if (idx < projects.length - 1) y += 2;
     });
   }
 
-  // === TRAINING / INTERNSHIPS ===
+  // ════════════════════════════════════════════
+  // 5. TRAINING / INTERNSHIPS
+  // ════════════════════════════════════════════
   if (internships.length > 0) {
-    addSectionHeader("TRAINING / INTERNSHIPS");
-    internships.forEach((e) => {
-      addLine(`${e.role} — ${e.organization}`, 9, true);
+    addSectionHeader("Training / Internships");
+    internships.forEach((e, idx) => {
+      setFont(9, true, [20, 20, 20]);
+      doc.text(`${e.role} — ${e.organization}`, marginLeft, y);
       const dates = [e.startDate && formatDate(e.startDate), e.endDate && formatDate(e.endDate)].filter(Boolean).join(" – ") || (e.singleDate ? formatDate(e.singleDate) : "");
       const durationStr = dates || e.duration;
-      if (durationStr) addLine(durationStr, 7, false, [100, 100, 100]);
-      addWrapped(e.responsibilities, 8);
-      y += 1;
+      if (durationStr) {
+        setFont(7, false, [100, 100, 100]);
+        doc.text(durationStr, pageWidth - marginRight, y, { align: "right" });
+      }
+      y += 4;
+      addWrapped(e.responsibilities, 8, marginLeft + 4, contentWidth - 4);
+      if (idx < internships.length - 1) y += 1.5;
     });
   }
 
-  // === CERTIFICATES ===
+  // ════════════════════════════════════════════
+  // 6. CERTIFICATES
+  // ════════════════════════════════════════════
   if (certifications.length > 0) {
-    addSectionHeader("CERTIFICATES");
+    addSectionHeader("Certificates");
     certifications.forEach((c) => {
-      addLine(`${c.title} — ${c.platform}${c.date ? ` (${c.date})` : ""}`, 8);
+      addBullet(`${c.title} — ${c.platform}${c.date ? ` (${c.date})` : ""}`, 8);
     });
   }
 
-  // === QR CODE (bottom-right) ===
+  // ════════════════════════════════════════════
+  // QR Code (bottom-right, small)
+  // ════════════════════════════════════════════
   const url = portfolioUrl || window.location.origin;
   try {
     const qrDataUrl = await generateQRDataURL(url);
-    doc.setFontSize(6);
-    doc.setTextColor(120, 120, 120);
-    doc.text("Scan for portfolio:", pageWidth - 38, pageHeight - 22);
-    doc.addImage(qrDataUrl, "PNG", pageWidth - 34, pageHeight - 20, 18, 18);
+    doc.setFontSize(5.5);
+    doc.setTextColor(130, 130, 130);
+    doc.text("Portfolio:", pageWidth - 30, pageHeight - 18);
+    doc.addImage(qrDataUrl, "PNG", pageWidth - 28, pageHeight - 17, 14, 14);
   } catch {
     // QR generation failed, skip
   }
