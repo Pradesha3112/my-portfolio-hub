@@ -66,13 +66,13 @@ export async function generateResume(portfolioUrl?: string) {
   // ═══════════════════════════════════════
   // HEADER — Name, Role, Contact (plain text, no graphics)
   // ═══════════════════════════════════════
-  setFont(18, "bold");
+  setFont(20, "bold");
   doc.text(d.name.toUpperCase(), mL, y);
-  y += 7;
+  y += 9;
 
   setFont(11, "normal", [50, 50, 50]);
   doc.text(d.role, mL, y);
-  y += 6;
+  y += 8;
 
   // Contact line — plain text, pipe-separated
   const contactParts: string[] = [];
@@ -80,11 +80,11 @@ export async function generateResume(portfolioUrl?: string) {
   if (d.linkedin) contactParts.push(d.linkedin);
   if (d.github) contactParts.push(d.github);
   if (contactParts.length > 0) {
-    setFont(9, "normal", [60, 60, 60]);
+    setFont(10, "normal", [60, 60, 60]);
     const contactLine = contactParts.join("  |  ");
     const contactLines = doc.splitTextToSize(contactLine, cW);
     doc.text(contactLines, mL, y);
-    y += contactLines.length * 4.5;
+    y += contactLines.length * 5 + 2;
   }
 
   // ═══════════════════════════════════════
