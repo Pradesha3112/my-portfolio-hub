@@ -1,64 +1,60 @@
 import jsPDF from "jspdf";
 import { getPortfolioData, getResumeItems } from "./portfolioData";
 
-async function generateQRDataURL(text: string): Promise<string> {
-  const QRCode = await import("qrcode");
-  return QRCode.toDataURL(text, { width: 80, margin: 1 });
-}
-
 export async function generateResume(portfolioUrl?: string) {
   const d = getPortfolioData();
   const { projects, internships, certifications, skillCategories } = getResumeItems(d);
   const doc = new jsPDF();
-  const pageWidth = doc.internal.pageSize.getWidth(); // 210mm
-  const pageHeight = doc.internal.pageSize.getHeight(); // 297mm
-  // ~0.7 inch margins (18mm) — maximise content width
-  const mL = 15;
-  const mR = 15;
-  const cW = pageWidth - mL - mR; // ~180mm usable width
-  let y = 18;
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const mL = 18;
+  const mR = 18;
+  const cW = pageWidth - mL - mR;
+  let y = 20;
 
-  // Line height multiplier ~1.2x for readability
-  const lh = (size: number) => size * 0.5;
-
-  const setFont = (size: number, bold = false, color: [number, number, number] = [20, 20, 20]) => {
+  // ATS-safe font: Helvetica (PDF equivalent of Arial)
+  const setFont = (size: number, style: "normal" | "bold" | "italic" = "normal", color: [number, number, number] = [0, 0, 0]) => {
     doc.setFontSize(size);
-    doc.setFont("helvetica", bold ? "bold" : "normal");
+    doc.setFont("helvetica", style);
     doc.setTextColor(...color);
   };
 
-  const addWrapped = (text: string, size: number, indent: number, maxW: number, color: [number, number, number] = [35, 35, 35]) => {
-    setFont(size, false, color);
-    const lines = doc.splitTextToSize(text, maxW);
-    doc.text(lines, indent, y);
-    y += lines.length * lh(size);
+  const lineHeight = (size: number) => size * 0.45;
+
+  const checkPage = (needed: number) => {
+    if (y + needed > pageHeight - 20) {
+      doc.addPage();
+      y = 20;
+    }
   };
 
-  const addBullet = (label: string, value: string, size: number, indent = mL) => {
-    const bulletX = indent;
-    const textX = indent + 4;
-    // Bold label
-    setFont(size, true, [20, 20, 20]);
-    doc.text("•", bulletX, y);
-    const labelW = doc.getTextWidth(label + ": ");
-    doc.text(label + ": ", textX, y);
-    // Normal value
-    setFont(size, false, [40, 40, 40]);
-    const valLines = doc.splitTextToSize(value, cW - 4 - labelW);
-    doc.text(valLines, textX + labelW, y);
-    const totalLines = Math.max(1, valLines.length);
-    y += totalLines * lh(size);
-  };
-
-  const addSectionHeader = (title: string) => {
-    y += 6;
+  const addSectionHeading = (title: string) => {
+    checkPage(14);
+    y += 5;
     doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(0.8);
+    doc.setLineWidth(0.5);
     doc.line(mL, y, pageWidth - mR, y);
-    y += 6;
-    setFont(14, true, [0, 0, 0]);
+    y += 5;
+    setFont(12, "bold");
     doc.text(title.toUpperCase(), mL, y);
-    y += 7;
+    y += 6;
+  };
+
+  const addBulletPoint = (text: string, indent = mL + 3) => {
+    checkPage(8);
+    setFont(10, "normal", [30, 30, 30]);
+    const bulletText = `\u2022  ${text}`;
+    const lines = doc.splitTextToSize(bulletText, cW - (indent - mL));
+    doc.text(lines, indent, y);
+    y += lines.length * lineHeight(10) + 1;
+  };
+
+  const addText = (text: string, size = 10, style: "normal" | "bold" | "italic" = "normal", color: [number, number, number] = [30, 30, 30]) => {
+    checkPage(8);
+    setFont(size, style, color);
+    const lines = doc.splitTextToSize(text, cW);
+    doc.text(lines, mL, y);
+    y += lines.length * lineHeight(size) + 1;
   };
 
   const formatDate = (iso?: string) => {
@@ -67,152 +63,179 @@ export async function generateResume(portfolioUrl?: string) {
     catch { return ""; }
   };
 
-  // ════════════════════════════════════════════
-  // 1. NAME & CONTACT (Name: 18pt, Role: 12pt)
-  // ════════════════════════════════════════════
-  setFont(20, true, [0, 0, 0]);
-  doc.text(d.name, mL, y);
-  y += 8;
+  // ═══════════════════════════════════════
+  // HEADER — Name, Role, Contact (plain text, no graphics)
+  // ═══════════════════════════════════════
+  setFont(18, "bold");
+  doc.text(d.name.toUpperCase(), mL, y);
+  y += 7;
 
-  setFont(12, false, [40, 40, 40]);
+  setFont(11, "normal", [50, 50, 50]);
   doc.text(d.role, mL, y);
   y += 6;
 
-  // Contact info
+  // Contact line — plain text, pipe-separated
   const contactParts: string[] = [];
   if (d.email) contactParts.push(d.email);
-  if (d.linkedin) contactParts.push(`LinkedIn: ${d.linkedin}`);
-  if (d.github) contactParts.push(`GitHub: ${d.github}`);
-  setFont(9.5, false, [60, 60, 60]);
-  const contactText = contactParts.join("  |  ");
-  const contactLines = doc.splitTextToSize(contactText, cW - 22);
-  doc.text(contactLines, mL, y);
-  y += contactLines.length * 5;
-
-  // QR code top-right near name
-  const url = portfolioUrl || window.location.origin;
-  try {
-    const qrDataUrl = await generateQRDataURL(url);
-    doc.addImage(qrDataUrl, "PNG", pageWidth - mR - 16, 14, 16, 16);
-    doc.setFontSize(5.5);
-    doc.setTextColor(100, 100, 100);
-    doc.text("Portfolio", pageWidth - mR - 16, 32);
-  } catch {
-    // skip
+  if (d.linkedin) contactParts.push(d.linkedin);
+  if (d.github) contactParts.push(d.github);
+  if (contactParts.length > 0) {
+    setFont(9, "normal", [60, 60, 60]);
+    const contactLine = contactParts.join("  |  ");
+    const contactLines = doc.splitTextToSize(contactLine, cW);
+    doc.text(contactLines, mL, y);
+    y += contactLines.length * 4.5;
   }
 
-  // ════════════════════════════════════════════
-  // 2. PROFESSIONAL SUMMARY (11pt body)
-  // ════════════════════════════════════════════
-  addSectionHeader("Professional Summary");
-  addWrapped(d.intro, 11, mL, cW);
+  // ═══════════════════════════════════════
+  // PROFESSIONAL SUMMARY
+  // ═══════════════════════════════════════
+  addSectionHeading("Professional Summary");
+  addText(d.intro, 10, "normal", [20, 20, 20]);
 
-  // ════════════════════════════════════════════
-  // 3. TECHNICAL SKILLS (11pt, bullet w/ bold label)
-  // ════════════════════════════════════════════
-  addSectionHeader("Technical Skills");
-
+  // ═══════════════════════════════════════
+  // SKILLS
+  // ═══════════════════════════════════════
+  addSectionHeading("Skills");
   const catLabels: Record<string, string> = {
-    languages: "Languages",
-    tools: "Tools",
-    platforms: "Platforms",
-    other: "Other Skills",
+    languages: "Programming Languages",
+    tools: "Tools & Technologies",
+    platforms: "Platforms & IDEs",
+    other: "Soft Skills",
   };
-
   skillCategories.forEach((cat) => {
     const skills = d.skills[cat];
     if (skills && skills.length > 0) {
-      addBullet(catLabels[cat] || cat, skills.join(", "), 11);
-      y += 1;
+      checkPage(8);
+      setFont(10, "bold", [10, 10, 10]);
+      const label = `${catLabels[cat] || cat}: `;
+      const labelW = doc.getTextWidth(label);
+      doc.text(label, mL, y);
+      setFont(10, "normal", [30, 30, 30]);
+      const valLines = doc.splitTextToSize(skills.join(", "), cW - labelW);
+      doc.text(valLines, mL + labelW, y);
+      y += valLines.length * lineHeight(10) + 2;
     }
   });
 
-  // ════════════════════════════════════════════
-  // 4. PROJECTS (12pt title, links, 11pt desc)
-  // ════════════════════════════════════════════
+  // ═══════════════════════════════════════
+  // PROJECTS
+  // ═══════════════════════════════════════
   if (projects.length > 0) {
-    addSectionHeader("Projects");
+    addSectionHeading("Projects");
     projects.forEach((p, idx) => {
-      // Bold project title
-      setFont(12, true, [0, 0, 0]);
+      checkPage(18);
+      // Title + date on same line
+      setFont(11, "bold", [0, 0, 0]);
       doc.text(p.title, mL, y);
-      // Date right-aligned
-      const pDates = [p.startDate && formatDate(p.startDate), p.endDate && formatDate(p.endDate)].filter(Boolean).join(" – ") || (p.singleDate ? formatDate(p.singleDate) : "");
+      const pDates = [p.startDate && formatDate(p.startDate), p.endDate && formatDate(p.endDate)].filter(Boolean).join(" - ") || (p.singleDate ? formatDate(p.singleDate) : "");
       if (pDates) {
-        setFont(9, false, [80, 80, 80]);
+        setFont(9, "normal", [80, 80, 80]);
         doc.text(pDates, pageWidth - mR, y, { align: "right" });
       }
       y += 5;
 
-      // Links (GitHub / Live Demo) in blue
-      if (p.githubLink || p.demoUrl || p.link) {
-        if (p.githubLink) {
-          setFont(9, false, [0, 50, 140]);
-          doc.text(`GitHub: ${p.githubLink}`, mL + 4, y);
-          y += 4;
-        }
-        if (p.demoUrl) {
-          setFont(9, false, [0, 50, 140]);
-          doc.text(`Live Demo: ${p.demoUrl}`, mL + 4, y);
-          y += 4;
-        } else if (p.link) {
-          setFont(9, false, [0, 50, 140]);
-          doc.text(`Link: ${p.link}`, mL + 4, y);
-          y += 4;
-        }
-      }
-
-      // Description as bullet points (split sentences)
-      const descBullets = p.description.split(/\.\s*/).filter(s => s.trim().length > 0);
-      descBullets.forEach((bullet) => {
-        setFont(11, false, [30, 30, 30]);
-        const text = `• ${bullet.trim().replace(/\.$/, "")}`;
-        const lines = doc.splitTextToSize(text, cW - 6);
-        doc.text(lines, mL + 4, y);
-        y += lines.length * lh(11);
-      });
-
-      // Tech stack
+      // Tech stack inline
       if (p.techStack.length > 0) {
-        setFont(9, true, [60, 60, 60]);
-        doc.text(`Tech: ${p.techStack.join(", ")}`, mL + 4, y);
+        setFont(9, "italic", [60, 60, 60]);
+        doc.text(`Technologies: ${p.techStack.join(", ")}`, mL, y);
         y += 4;
       }
 
-      if (idx < projects.length - 1) y += 3;
-    });
-  }
+      // Description as bullet points
+      const descBullets = p.description.split(/\.\s*/).filter(s => s.trim().length > 0);
+      descBullets.forEach((bullet) => {
+        addBulletPoint(bullet.trim().replace(/\.$/, ""));
+      });
 
-  // ════════════════════════════════════════════
-  // 5. TRAINING / INTERNSHIPS
-  // ════════════════════════════════════════════
-  if (internships.length > 0) {
-    addSectionHeader("Training / Internships");
-    internships.forEach((e, idx) => {
-      setFont(12, true, [10, 10, 10]);
-      doc.text(`${e.role} — ${e.organization}`, mL, y);
-      const dates = [e.startDate && formatDate(e.startDate), e.endDate && formatDate(e.endDate)].filter(Boolean).join(" – ") || (e.singleDate ? formatDate(e.singleDate) : "");
-      const durationStr = dates || e.duration;
-      if (durationStr) {
-        setFont(9, false, [80, 80, 80]);
-        doc.text(durationStr, pageWidth - mR, y, { align: "right" });
+      // Links as plain text
+      if (p.githubLink) {
+        setFont(9, "normal", [40, 40, 40]);
+        doc.text(`GitHub: ${p.githubLink}`, mL + 3, y);
+        y += 4;
       }
-      y += 6;
-      addWrapped(e.responsibilities, 11, mL + 2, cW - 2);
-      if (idx < internships.length - 1) y += 3;
+      if (p.demoUrl || p.link) {
+        setFont(9, "normal", [40, 40, 40]);
+        doc.text(`Link: ${p.demoUrl || p.link}`, mL + 3, y);
+        y += 4;
+      }
+
+      if (idx < projects.length - 1) y += 2;
     });
   }
 
-  // ════════════════════════════════════════════
-  // 6. CERTIFICATES (11pt bullets)
-  // ════════════════════════════════════════════
+  // ═══════════════════════════════════════
+  // INTERNSHIP / EXPERIENCE
+  // ═══════════════════════════════════════
+  if (internships.length > 0) {
+    addSectionHeading("Internship / Experience");
+    internships.forEach((e, idx) => {
+      checkPage(16);
+      setFont(11, "bold", [0, 0, 0]);
+      doc.text(e.role, mL, y);
+      const dates = [e.startDate && formatDate(e.startDate), e.endDate && formatDate(e.endDate)].filter(Boolean).join(" - ") || (e.singleDate ? formatDate(e.singleDate) : "") || e.duration;
+      if (dates) {
+        setFont(9, "normal", [80, 80, 80]);
+        doc.text(dates, pageWidth - mR, y, { align: "right" });
+      }
+      y += 5;
+      setFont(10, "italic", [50, 50, 50]);
+      doc.text(e.organization, mL, y);
+      y += 5;
+
+      // Responsibilities as bullets
+      const respBullets = e.responsibilities.split(/\.\s*/).filter(s => s.trim().length > 0);
+      respBullets.forEach((bullet) => {
+        addBulletPoint(bullet.trim().replace(/\.$/, ""));
+      });
+
+      if (idx < internships.length - 1) y += 2;
+    });
+  }
+
+  // ═══════════════════════════════════════
+  // CERTIFICATIONS
+  // ═══════════════════════════════════════
   if (certifications.length > 0) {
-    addSectionHeader("Certificates");
+    addSectionHeading("Certifications");
     certifications.forEach((c) => {
-      setFont(11, false, [35, 35, 35]);
-      doc.text("•", mL + 1, y);
-      doc.text(`${c.title} — ${c.platform}${c.date ? ` (${c.date})` : ""}`, mL + 5, y);
-      y += lh(11) + 1;
+      addBulletPoint(`${c.title} — ${c.platform}${c.date ? ` (${c.date})` : ""}`);
+    });
+  }
+
+  // ═══════════════════════════════════════
+  // EDUCATION
+  // ═══════════════════════════════════════
+  if (d.education && d.education.length > 0) {
+    addSectionHeading("Education");
+    d.education.forEach((edu, idx) => {
+      checkPage(14);
+      setFont(11, "bold", [0, 0, 0]);
+      doc.text(edu.course, mL, y);
+      y += 5;
+      setFont(10, "normal", [40, 40, 40]);
+      doc.text(edu.institution, mL, y);
+      if (edu.duration) {
+        setFont(9, "normal", [80, 80, 80]);
+        doc.text(edu.duration, pageWidth - mR, y, { align: "right" });
+      }
+      y += 5;
+      if (edu.score) {
+        setFont(9, "normal", [50, 50, 50]);
+        doc.text(edu.score, mL, y);
+        y += 4;
+      }
+      if (idx < d.education.length - 1) y += 2;
+    });
+  }
+
+  // ═══════════════════════════════════════
+  // ACHIEVEMENTS
+  // ═══════════════════════════════════════
+  if (d.achievements && d.achievements.length > 0) {
+    addSectionHeading("Achievements");
+    d.achievements.forEach((a) => {
+      addBulletPoint(a);
     });
   }
 
