@@ -187,6 +187,7 @@ const defaultData: PortfolioData = {
     selectedInternships: [],
     selectedCertifications: [],
     selectedSkillCategories: ["languages", "tools", "platforms", "other"],
+    sectionOrder: ["summary", "skills", "projects", "experience", "certifications", "education", "achievements"],
   },
   lastEdited: new Date().toISOString(),
 };
