@@ -19,7 +19,7 @@ export async function generateResume(portfolioUrl?: string) {
     doc.setTextColor(...color);
   };
 
-  const lineHeight = (size: number) => size * 0.45;
+  const lineHeight = (size: number) => size * 0.5;
 
   const checkPage = (needed: number) => {
     if (y + needed > pageHeight - 20) {
