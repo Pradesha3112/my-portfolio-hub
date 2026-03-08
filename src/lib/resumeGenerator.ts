@@ -1,4 +1,5 @@
 import jsPDF from "jspdf";
+import QRCode from "qrcode";
 import { getPortfolioData, getResumeItems } from "./portfolioData";
 
 export async function generateResume(portfolioUrl?: string) {
@@ -237,6 +238,23 @@ export async function generateResume(portfolioUrl?: string) {
     d.achievements.forEach((a) => {
       addBulletPoint(a);
     });
+  }
+
+  // QR Code for portfolio link
+  const qrUrl = portfolioUrl || window.location.origin;
+  try {
+    const qrDataUrl = await QRCode.toDataURL(qrUrl, { width: 200, margin: 1, color: { dark: "#000000", light: "#ffffff" } });
+    const qrSize = 22;
+    const qrX = pageWidth - mR - qrSize;
+    const qrY = pageHeight - 18 - qrSize;
+    checkPage(0);
+    // Place on last page bottom-right
+    doc.addImage(qrDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
+    doc.setFontSize(7);
+    doc.setTextColor(100, 100, 100);
+    doc.text("Scan for Portfolio", qrX + qrSize / 2, qrY + qrSize + 3, { align: "center" });
+  } catch {
+    // Skip QR if generation fails
   }
 
   doc.save(`${d.name.replace(/\s+/g, "_")}_Resume.pdf`);
