@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { isAdmin, logout } from "@/lib/auth";
 import { usePortfolio } from "@/hooks/usePortfolio";
-import { generateId, getResumeItems, type Education, type Internship, type Project, type Certification } from "@/lib/portfolioData";
+import { generateId, getResumeItems, type Education, type Internship, type Project, type Certification, DEFAULT_SECTION_ORDER, type ResumeSectionId } from "@/lib/portfolioData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { LogOut, Trash2, Plus, Undo2, RotateCcw, Save, Palette, Check, Calendar as CalendarIcon, Image, Video, Eye, FileText, AlertTriangle } from "lucide-react";
+import { LogOut, Trash2, Plus, Undo2, RotateCcw, Save, Palette, Check, Calendar as CalendarIcon, Image, Video, Eye, FileText, AlertTriangle, ArrowUp, ArrowDown, GripVertical } from "lucide-react";
 import { themeOptions, getSavedTheme, saveTheme, type ThemeOption } from "@/lib/themeManager";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -333,6 +333,61 @@ export default function DashboardPage() {
                     {c.title} — {c.platform}
                   </label>
                 ))}
+              </div>
+            </div>
+
+            {/* Section Order */}
+            <div className="rounded-lg border border-border bg-card p-5">
+              <h3 className="font-semibold text-card-foreground mb-1">Section Order</h3>
+              <p className="text-xs text-muted-foreground mb-3">Reorder how sections appear in your resume. Use arrows to move sections up or down.</p>
+              <div className="space-y-1">
+                {(data.resumeSelections.sectionOrder || DEFAULT_SECTION_ORDER).map((sectionId, index, arr) => {
+                  const sectionLabels: Record<ResumeSectionId, string> = {
+                    summary: "Professional Summary",
+                    skills: "Skills",
+                    projects: "Projects",
+                    experience: "Internship / Experience",
+                    certifications: "Certifications",
+                    education: "Education",
+                    achievements: "Achievements",
+                  };
+                  return (
+                    <div key={sectionId} className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2">
+                      <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="text-sm text-foreground flex-1">{index + 1}. {sectionLabels[sectionId]}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0"
+                        disabled={index === 0}
+                        onClick={() => {
+                          update((d) => {
+                            const order = [...(d.resumeSelections.sectionOrder || DEFAULT_SECTION_ORDER)];
+                            [order[index - 1], order[index]] = [order[index], order[index - 1]];
+                            return { ...d, resumeSelections: { ...d.resumeSelections, sectionOrder: order } };
+                          });
+                        }}
+                      >
+                        <ArrowUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0"
+                        disabled={index === arr.length - 1}
+                        onClick={() => {
+                          update((d) => {
+                            const order = [...(d.resumeSelections.sectionOrder || DEFAULT_SECTION_ORDER)];
+                            [order[index], order[index + 1]] = [order[index + 1], order[index]];
+                            return { ...d, resumeSelections: { ...d.resumeSelections, sectionOrder: order } };
+                          });
+                        }}
+                      >
+                        <ArrowDown className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 

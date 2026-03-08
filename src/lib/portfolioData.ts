@@ -54,11 +54,18 @@ export interface Certification {
   thumbnail?: string;
 }
 
+export type ResumeSectionId = "summary" | "skills" | "projects" | "experience" | "certifications" | "education" | "achievements";
+
+export const DEFAULT_SECTION_ORDER: ResumeSectionId[] = [
+  "summary", "skills", "projects", "experience", "certifications", "education", "achievements"
+];
+
 export interface ResumeSelections {
   selectedProjects: string[];
   selectedInternships: string[];
   selectedCertifications: string[];
   selectedSkillCategories: ("languages" | "tools" | "platforms" | "other")[];
+  sectionOrder: ResumeSectionId[];
 }
 
 export interface PortfolioData {
@@ -180,6 +187,7 @@ const defaultData: PortfolioData = {
     selectedInternships: [],
     selectedCertifications: [],
     selectedSkillCategories: ["languages", "tools", "platforms", "other"],
+    sectionOrder: ["summary", "skills", "projects", "experience", "certifications", "education", "achievements"],
   },
   lastEdited: new Date().toISOString(),
 };
@@ -195,6 +203,9 @@ export function getPortfolioData(): PortfolioData {
       // Ensure resumeSelections exists for older data
       if (!parsed.resumeSelections) {
         parsed.resumeSelections = defaultData.resumeSelections;
+      }
+      if (!parsed.resumeSelections.sectionOrder) {
+        parsed.resumeSelections.sectionOrder = defaultData.resumeSelections.sectionOrder;
       }
       return parsed;
     } catch {
