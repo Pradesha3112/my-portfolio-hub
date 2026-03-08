@@ -19,42 +19,42 @@ export async function generateResume(portfolioUrl?: string) {
     doc.setTextColor(...color);
   };
 
-  const lineHeight = (size: number) => size * 0.5;
+  const lineHeight = (size: number) => size * 0.42;
 
   const checkPage = (needed: number) => {
-    if (y + needed > pageHeight - 20) {
+    if (y + needed > pageHeight - 18) {
       doc.addPage();
-      y = 20;
+      y = 18;
     }
   };
 
   const addSectionHeading = (title: string) => {
-    checkPage(18);
-    y += 8;
+    checkPage(14);
+    y += 5;
     doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(0.5);
+    doc.setLineWidth(0.4);
     doc.line(mL, y, pageWidth - mR, y);
-    y += 7;
-    setFont(13, "bold");
+    y += 5;
+    setFont(12, "bold");
     doc.text(title.toUpperCase(), mL, y);
-    y += 8;
+    y += 5;
   };
 
   const addBulletPoint = (text: string, indent = mL + 3) => {
-    checkPage(10);
-    setFont(11, "normal", [30, 30, 30]);
+    checkPage(8);
+    setFont(10, "normal", [30, 30, 30]);
     const bulletText = `\u2022  ${text}`;
     const lines = doc.splitTextToSize(bulletText, cW - (indent - mL));
     doc.text(lines, indent, y);
-    y += lines.length * lineHeight(11) + 3;
+    y += lines.length * lineHeight(10) + 1.5;
   };
 
-  const addText = (text: string, size = 11, style: "normal" | "bold" | "italic" = "normal", color: [number, number, number] = [30, 30, 30]) => {
-    checkPage(10);
+  const addText = (text: string, size = 10, style: "normal" | "bold" | "italic" = "normal", color: [number, number, number] = [30, 30, 30]) => {
+    checkPage(8);
     setFont(size, style, color);
     const lines = doc.splitTextToSize(text, cW);
     doc.text(lines, mL, y);
-    y += lines.length * lineHeight(size) + 2;
+    y += lines.length * lineHeight(size) + 1.5;
   };
 
   const formatDate = (iso?: string) => {
