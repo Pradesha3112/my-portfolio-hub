@@ -49,12 +49,12 @@ export async function generateResume(portfolioUrl?: string) {
     y += lines.length * lineHeight(11) + 3;
   };
 
-  const addText = (text: string, size = 10, style: "normal" | "bold" | "italic" = "normal", color: [number, number, number] = [30, 30, 30]) => {
-    checkPage(8);
+  const addText = (text: string, size = 11, style: "normal" | "bold" | "italic" = "normal", color: [number, number, number] = [30, 30, 30]) => {
+    checkPage(10);
     setFont(size, style, color);
     const lines = doc.splitTextToSize(text, cW);
     doc.text(lines, mL, y);
-    y += lines.length * lineHeight(size) + 1;
+    y += lines.length * lineHeight(size) + 2;
   };
 
   const formatDate = (iso?: string) => {
