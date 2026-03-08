@@ -106,15 +106,15 @@ export async function generateResume(portfolioUrl?: string) {
   skillCategories.forEach((cat) => {
     const skills = d.skills[cat];
     if (skills && skills.length > 0) {
-      checkPage(8);
-      setFont(10, "bold", [10, 10, 10]);
+      checkPage(10);
+      setFont(11, "bold", [10, 10, 10]);
       const label = `${catLabels[cat] || cat}: `;
       const labelW = doc.getTextWidth(label);
       doc.text(label, mL, y);
-      setFont(10, "normal", [30, 30, 30]);
+      setFont(11, "normal", [30, 30, 30]);
       const valLines = doc.splitTextToSize(skills.join(", "), cW - labelW);
       doc.text(valLines, mL + labelW, y);
-      y += valLines.length * lineHeight(10) + 2;
+      y += valLines.length * lineHeight(11) + 4;
     }
   });
 
