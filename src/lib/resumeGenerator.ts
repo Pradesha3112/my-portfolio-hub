@@ -150,17 +150,17 @@ export async function generateResume(portfolioUrl?: string) {
 
       // Links as plain text
       if (p.githubLink) {
-        setFont(9, "normal", [40, 40, 40]);
+        setFont(10, "normal", [40, 40, 40]);
         doc.text(`GitHub: ${p.githubLink}`, mL + 3, y);
-        y += 4;
+        y += 5;
       }
       if (p.demoUrl || p.link) {
-        setFont(9, "normal", [40, 40, 40]);
+        setFont(10, "normal", [40, 40, 40]);
         doc.text(`Link: ${p.demoUrl || p.link}`, mL + 3, y);
-        y += 4;
+        y += 5;
       }
 
-      if (idx < projects.length - 1) y += 2;
+      if (idx < projects.length - 1) y += 5;
     });
   }
 
