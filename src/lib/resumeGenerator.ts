@@ -189,7 +189,7 @@ export async function generateResume(portfolioUrl?: string) {
         addBulletPoint(bullet.trim().replace(/\.$/, ""));
       });
 
-      if (idx < internships.length - 1) y += 2;
+      if (idx < internships.length - 1) y += 5;
     });
   }
 
