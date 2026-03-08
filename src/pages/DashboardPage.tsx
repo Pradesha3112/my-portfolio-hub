@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { isAdmin, logout } from "@/lib/auth";
 import { usePortfolio } from "@/hooks/usePortfolio";
-import { generateId, getResumeItems, type Education, type Internship, type Project, type Certification } from "@/lib/portfolioData";
+import { generateId, getResumeItems, type Education, type Internship, type Project, type Certification, DEFAULT_SECTION_ORDER, type ResumeSectionId } from "@/lib/portfolioData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
