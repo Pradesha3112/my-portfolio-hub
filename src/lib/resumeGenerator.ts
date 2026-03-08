@@ -124,22 +124,22 @@ export async function generateResume(portfolioUrl?: string) {
   if (projects.length > 0) {
     addSectionHeading("Projects");
     projects.forEach((p, idx) => {
-      checkPage(22);
+      checkPage(16);
       // Title + date on same line
-      setFont(12, "bold", [0, 0, 0]);
+      setFont(11, "bold", [0, 0, 0]);
       doc.text(p.title, mL, y);
       const pDates = [p.startDate && formatDate(p.startDate), p.endDate && formatDate(p.endDate)].filter(Boolean).join(" - ") || (p.singleDate ? formatDate(p.singleDate) : "");
       if (pDates) {
-        setFont(10, "normal", [80, 80, 80]);
+        setFont(9, "normal", [80, 80, 80]);
         doc.text(pDates, pageWidth - mR, y, { align: "right" });
       }
-      y += 7;
+      y += 5;
 
       // Tech stack inline
       if (p.techStack.length > 0) {
-        setFont(10, "italic", [60, 60, 60]);
+        setFont(9, "italic", [60, 60, 60]);
         doc.text(`Technologies: ${p.techStack.join(", ")}`, mL, y);
-        y += 6;
+        y += 4;
       }
 
       // Description as bullet points
