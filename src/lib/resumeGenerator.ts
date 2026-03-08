@@ -209,23 +209,23 @@ export async function generateResume(portfolioUrl?: string) {
   if (d.education && d.education.length > 0) {
     addSectionHeading("Education");
     d.education.forEach((edu, idx) => {
-      checkPage(14);
-      setFont(11, "bold", [0, 0, 0]);
+      checkPage(18);
+      setFont(12, "bold", [0, 0, 0]);
       doc.text(edu.course, mL, y);
-      y += 5;
-      setFont(10, "normal", [40, 40, 40]);
+      y += 7;
+      setFont(11, "normal", [40, 40, 40]);
       doc.text(edu.institution, mL, y);
       if (edu.duration) {
-        setFont(9, "normal", [80, 80, 80]);
+        setFont(10, "normal", [80, 80, 80]);
         doc.text(edu.duration, pageWidth - mR, y, { align: "right" });
       }
-      y += 5;
+      y += 6;
       if (edu.score) {
-        setFont(9, "normal", [50, 50, 50]);
+        setFont(10, "normal", [50, 50, 50]);
         doc.text(edu.score, mL, y);
-        y += 4;
+        y += 5;
       }
-      if (idx < d.education.length - 1) y += 2;
+      if (idx < d.education.length - 1) y += 4;
     });
   }
 
