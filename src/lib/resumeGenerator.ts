@@ -41,12 +41,12 @@ export async function generateResume(portfolioUrl?: string) {
   };
 
   const addBulletPoint = (text: string, indent = mL + 3) => {
-    checkPage(8);
-    setFont(10, "normal", [30, 30, 30]);
+    checkPage(10);
+    setFont(11, "normal", [30, 30, 30]);
     const bulletText = `\u2022  ${text}`;
     const lines = doc.splitTextToSize(bulletText, cW - (indent - mL));
     doc.text(lines, indent, y);
-    y += lines.length * lineHeight(10) + 1;
+    y += lines.length * lineHeight(11) + 3;
   };
 
   const addText = (text: string, size = 10, style: "normal" | "bold" | "italic" = "normal", color: [number, number, number] = [30, 30, 30]) => {
