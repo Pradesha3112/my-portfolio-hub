@@ -91,7 +91,7 @@ export async function generateResume(portfolioUrl?: string) {
   // PROFESSIONAL SUMMARY
   // ═══════════════════════════════════════
   addSectionHeading("Professional Summary");
-  addText(d.intro, 10, "normal", [20, 20, 20]);
+  addText(d.intro, 11, "normal", [20, 20, 20]);
 
   // ═══════════════════════════════════════
   // SKILLS
