@@ -1,4 +1,5 @@
 import jsPDF from "jspdf";
+import QRCode from "qrcode";
 import { getPortfolioData, getResumeItems } from "./portfolioData";
 
 export async function generateResume(portfolioUrl?: string) {
