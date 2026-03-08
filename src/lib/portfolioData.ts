@@ -54,11 +54,18 @@ export interface Certification {
   thumbnail?: string;
 }
 
+export type ResumeSectionId = "summary" | "skills" | "projects" | "experience" | "certifications" | "education" | "achievements";
+
+export const DEFAULT_SECTION_ORDER: ResumeSectionId[] = [
+  "summary", "skills", "projects", "experience", "certifications", "education", "achievements"
+];
+
 export interface ResumeSelections {
   selectedProjects: string[];
   selectedInternships: string[];
   selectedCertifications: string[];
   selectedSkillCategories: ("languages" | "tools" | "platforms" | "other")[];
+  sectionOrder: ResumeSectionId[];
 }
 
 export interface PortfolioData {
