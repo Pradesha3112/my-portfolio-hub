@@ -65,8 +65,26 @@ export async function generateResume(portfolioUrl?: string) {
   };
 
   // ═══════════════════════════════════════
-  // HEADER — Name, Role, Contact (plain text, no graphics)
+  // QR Code — top-right corner of header
   // ═══════════════════════════════════════
+  const qrUrl = portfolioUrl || window.location.origin;
+  const qrSize = 20;
+  const qrX = pageWidth - mR - qrSize;
+  const qrY = y - 4;
+  try {
+    const qrDataUrl = await QRCode.toDataURL(qrUrl, { width: 200, margin: 1, color: { dark: "#000000", light: "#ffffff" } });
+    doc.addImage(qrDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
+    doc.setFontSize(6);
+    doc.setTextColor(100, 100, 100);
+    doc.text("Portfolio", qrX + qrSize / 2, qrY + qrSize + 2.5, { align: "center" });
+  } catch {
+    // Skip QR if generation fails
+  }
+
+  // ═══════════════════════════════════════
+  // HEADER — Name, Role, Contact
+  // ═══════════════════════════════════════
+  const headerContentWidth = cW - qrSize - 5;
   setFont(18, "bold");
   doc.text(d.name.toUpperCase(), mL, y);
   y += 6;
@@ -75,7 +93,6 @@ export async function generateResume(portfolioUrl?: string) {
   doc.text(d.role, mL, y);
   y += 5;
 
-  // Contact line — plain text, pipe-separated
   const contactParts: string[] = [];
   if (d.email) contactParts.push(d.email);
   if (d.linkedin) contactParts.push(d.linkedin);
@@ -83,10 +100,12 @@ export async function generateResume(portfolioUrl?: string) {
   if (contactParts.length > 0) {
     setFont(9, "normal", [60, 60, 60]);
     const contactLine = contactParts.join("  |  ");
-    const contactLines = doc.splitTextToSize(contactLine, cW);
+    const contactLines = doc.splitTextToSize(contactLine, headerContentWidth);
     doc.text(contactLines, mL, y);
     y += contactLines.length * 4 + 1;
   }
+  // Ensure y clears the QR code area
+  if (y < qrY + qrSize + 5) y = qrY + qrSize + 5;
 
   // ═══════════════════════════════════════
   // PROFESSIONAL SUMMARY
