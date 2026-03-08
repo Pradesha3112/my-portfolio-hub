@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { LogOut, Trash2, Plus, Undo2, RotateCcw, Save, Palette, Check, Calendar as CalendarIcon, Image, Video, Eye, FileText, AlertTriangle } from "lucide-react";
+import { LogOut, Trash2, Plus, Undo2, RotateCcw, Save, Palette, Check, Calendar as CalendarIcon, Image, Video, Eye, FileText, AlertTriangle, ArrowUp, ArrowDown, GripVertical } from "lucide-react";
 import { themeOptions, getSavedTheme, saveTheme, type ThemeOption } from "@/lib/themeManager";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
