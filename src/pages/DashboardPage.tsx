@@ -336,6 +336,61 @@ export default function DashboardPage() {
               </div>
             </div>
 
+            {/* Section Order */}
+            <div className="rounded-lg border border-border bg-card p-5">
+              <h3 className="font-semibold text-card-foreground mb-1">Section Order</h3>
+              <p className="text-xs text-muted-foreground mb-3">Reorder how sections appear in your resume. Use arrows to move sections up or down.</p>
+              <div className="space-y-1">
+                {(data.resumeSelections.sectionOrder || DEFAULT_SECTION_ORDER).map((sectionId, index, arr) => {
+                  const sectionLabels: Record<ResumeSectionId, string> = {
+                    summary: "Professional Summary",
+                    skills: "Skills",
+                    projects: "Projects",
+                    experience: "Internship / Experience",
+                    certifications: "Certifications",
+                    education: "Education",
+                    achievements: "Achievements",
+                  };
+                  return (
+                    <div key={sectionId} className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2">
+                      <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="text-sm text-foreground flex-1">{index + 1}. {sectionLabels[sectionId]}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0"
+                        disabled={index === 0}
+                        onClick={() => {
+                          update((d) => {
+                            const order = [...(d.resumeSelections.sectionOrder || DEFAULT_SECTION_ORDER)];
+                            [order[index - 1], order[index]] = [order[index], order[index - 1]];
+                            return { ...d, resumeSelections: { ...d.resumeSelections, sectionOrder: order } };
+                          });
+                        }}
+                      >
+                        <ArrowUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0"
+                        disabled={index === arr.length - 1}
+                        onClick={() => {
+                          update((d) => {
+                            const order = [...(d.resumeSelections.sectionOrder || DEFAULT_SECTION_ORDER)];
+                            [order[index], order[index + 1]] = [order[index + 1], order[index]];
+                            return { ...d, resumeSelections: { ...d.resumeSelections, sectionOrder: order } };
+                          });
+                        }}
+                      >
+                        <ArrowDown className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Preview summary */}
             <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-5">
               <h3 className="font-semibold text-foreground mb-3">Resume Preview Summary</h3>
