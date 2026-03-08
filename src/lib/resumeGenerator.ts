@@ -170,18 +170,18 @@ export async function generateResume(portfolioUrl?: string) {
   if (internships.length > 0) {
     addSectionHeading("Internship / Experience");
     internships.forEach((e, idx) => {
-      checkPage(16);
-      setFont(11, "bold", [0, 0, 0]);
+      checkPage(20);
+      setFont(12, "bold", [0, 0, 0]);
       doc.text(e.role, mL, y);
       const dates = [e.startDate && formatDate(e.startDate), e.endDate && formatDate(e.endDate)].filter(Boolean).join(" - ") || (e.singleDate ? formatDate(e.singleDate) : "") || e.duration;
       if (dates) {
-        setFont(9, "normal", [80, 80, 80]);
+        setFont(10, "normal", [80, 80, 80]);
         doc.text(dates, pageWidth - mR, y, { align: "right" });
       }
-      y += 5;
-      setFont(10, "italic", [50, 50, 50]);
+      y += 7;
+      setFont(11, "italic", [50, 50, 50]);
       doc.text(e.organization, mL, y);
-      y += 5;
+      y += 6;
 
       // Responsibilities as bullets
       const respBullets = e.responsibilities.split(/\.\s*/).filter(s => s.trim().length > 0);
