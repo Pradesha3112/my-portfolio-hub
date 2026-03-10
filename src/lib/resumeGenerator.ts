@@ -85,27 +85,27 @@ export async function generateResume(portfolioUrl?: string) {
   // HEADER — Name, Role, Contact
   // ═══════════════════════════════════════
   const headerContentWidth = cW - qrSize - 5;
-  setFont(18, "bold");
+  setFont(16, "bold");
   doc.text(d.name.toUpperCase(), mL, y);
-  y += 6;
+  y += 5;
 
   setFont(10, "normal", [50, 50, 50]);
   doc.text(d.role, mL, y);
-  y += 5;
+  y += 4;
 
   const contactParts: string[] = [];
   if (d.email) contactParts.push(d.email);
   if (d.linkedin) contactParts.push(d.linkedin);
   if (d.github) contactParts.push(d.github);
   if (contactParts.length > 0) {
-    setFont(9, "normal", [60, 60, 60]);
+    setFont(8.5, "normal", [60, 60, 60]);
     const contactLine = contactParts.join("  |  ");
     const contactLines = doc.splitTextToSize(contactLine, headerContentWidth);
     doc.text(contactLines, mL, y);
-    y += contactLines.length * 4 + 1;
+    y += contactLines.length * 3.5 + 1;
   }
   // Ensure y clears the QR code area
-  if (y < qrY + qrSize + 5) y = qrY + qrSize + 5;
+  if (y < qrY + qrSize + 4) y = qrY + qrSize + 4;
 
   // ═══════════════════════════════════════
   // SECTIONS — rendered in user-defined order
