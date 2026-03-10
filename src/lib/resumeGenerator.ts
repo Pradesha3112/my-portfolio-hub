@@ -32,10 +32,6 @@ export async function generateResume(portfolioUrl?: string) {
   const addSectionHeading = (title: string) => {
     checkPage(14);
     y += 5;
-    doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(0.4);
-    doc.line(mL, y, pageWidth - mR, y);
-    y += 5;
     setFont(12, "bold");
     doc.text(title.toUpperCase(), mL, y);
     y += 5;
