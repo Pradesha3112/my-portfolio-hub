@@ -1,5 +1,4 @@
 import jsPDF from "jspdf";
-import QRCode from "qrcode";
 import { getPortfolioData, getResumeItems, DEFAULT_SECTION_ORDER, type ResumeSectionId } from "./portfolioData";
 
 export async function generateResume(portfolioUrl?: string) {
@@ -11,46 +10,45 @@ export async function generateResume(portfolioUrl?: string) {
   const mL = 18;
   const mR = 18;
   const cW = pageWidth - mL - mR;
-  let y = 20;
+  let y = 18;
 
-  // ATS-safe font: Helvetica (PDF equivalent of Arial)
   const setFont = (size: number, style: "normal" | "bold" | "italic" = "normal", color: [number, number, number] = [0, 0, 0]) => {
     doc.setFontSize(size);
     doc.setFont("helvetica", style);
     doc.setTextColor(...color);
   };
 
-  const lineHeight = (size: number) => size * 0.42;
+  const lineHeight = (size: number) => size * 0.4;
 
   const checkPage = (needed: number) => {
-    if (y + needed > pageHeight - 18) {
+    if (y + needed > pageHeight - 15) {
       doc.addPage();
-      y = 18;
+      y = 15;
     }
   };
 
   const addSectionHeading = (title: string) => {
-    checkPage(12);
-    y += 3;
-    doc.setDrawColor(180, 180, 180);
-    doc.setLineWidth(0.3);
-    doc.line(mL, y, pageWidth - mR, y);
-    y += 4;
+    checkPage(10);
+    y += 5;
     setFont(11, "bold");
     doc.text(title.toUpperCase(), mL, y);
+    y += 1;
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.4);
+    doc.line(mL, y, pageWidth - mR, y);
     y += 4;
   };
 
   const addBulletPoint = (text: string, indent = mL + 3) => {
     checkPage(6);
-    setFont(9.5, "normal", [30, 30, 30]);
+    setFont(9.5, "normal", [0, 0, 0]);
     const bulletText = `\u2022  ${text}`;
     const lines = doc.splitTextToSize(bulletText, cW - (indent - mL));
     doc.text(lines, indent, y);
-    y += lines.length * lineHeight(9.5) + 1;
+    y += lines.length * lineHeight(9.5) + 1.2;
   };
 
-  const addText = (text: string, size = 9.5, style: "normal" | "bold" | "italic" = "normal", color: [number, number, number] = [30, 30, 30]) => {
+  const addText = (text: string, size = 9.5, style: "normal" | "bold" | "italic" = "normal", color: [number, number, number] = [0, 0, 0]) => {
     checkPage(6);
     setFont(size, style, color);
     const lines = doc.splitTextToSize(text, cW);
@@ -65,32 +63,14 @@ export async function generateResume(portfolioUrl?: string) {
   };
 
   // ═══════════════════════════════════════
-  // QR Code — top-right corner of header
+  // HEADER — Name, Role, Contact (no graphics)
   // ═══════════════════════════════════════
-  const qrUrl = portfolioUrl || window.location.origin;
-  const qrSize = 20;
-  const qrX = pageWidth - mR - qrSize;
-  const qrY = y - 4;
-  try {
-    const qrDataUrl = await QRCode.toDataURL(qrUrl, { width: 200, margin: 1, color: { dark: "#000000", light: "#ffffff" } });
-    doc.addImage(qrDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
-    doc.setFontSize(6);
-    doc.setTextColor(100, 100, 100);
-    doc.text("Portfolio", qrX + qrSize / 2, qrY + qrSize + 2.5, { align: "center" });
-  } catch {
-    // Skip QR if generation fails
-  }
-
-  // ═══════════════════════════════════════
-  // HEADER — Name, Role, Contact
-  // ═══════════════════════════════════════
-  const headerContentWidth = cW - qrSize - 5;
-  setFont(16, "bold");
-  doc.text(d.name.toUpperCase(), mL, y);
+  setFont(18, "bold");
+  doc.text(d.name.toUpperCase(), pageWidth / 2, y, { align: "center" });
   y += 5;
 
-  setFont(10, "normal", [50, 50, 50]);
-  doc.text(d.role, mL, y);
+  setFont(10, "normal", [40, 40, 40]);
+  doc.text(d.role, pageWidth / 2, y, { align: "center" });
   y += 4;
 
   const contactParts: string[] = [];
@@ -98,14 +78,15 @@ export async function generateResume(portfolioUrl?: string) {
   if (d.linkedin) contactParts.push(d.linkedin);
   if (d.github) contactParts.push(d.github);
   if (contactParts.length > 0) {
-    setFont(8.5, "normal", [60, 60, 60]);
+    setFont(8.5, "normal", [40, 40, 40]);
     const contactLine = contactParts.join("  |  ");
-    const contactLines = doc.splitTextToSize(contactLine, headerContentWidth);
-    doc.text(contactLines, mL, y);
-    y += contactLines.length * 3.5 + 1;
+    const contactLines = doc.splitTextToSize(contactLine, cW);
+    contactLines.forEach((line: string) => {
+      doc.text(line, pageWidth / 2, y, { align: "center" });
+      y += 3.5;
+    });
   }
-  // Ensure y clears the QR code area
-  if (y < qrY + qrSize + 4) y = qrY + qrSize + 4;
+  y += 1;
 
   // ═══════════════════════════════════════
   // SECTIONS — rendered in user-defined order
