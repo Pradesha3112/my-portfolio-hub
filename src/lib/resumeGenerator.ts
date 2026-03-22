@@ -7,10 +7,10 @@ export async function generateResume(portfolioUrl?: string) {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const mL = 18;
-  const mR = 18;
+  const mL = 25.4; // 1 inch standard margin
+  const mR = 25.4;
   const cW = pageWidth - mL - mR;
-  let y = 18;
+  let y = 22;
 
   const setFont = (size: number, style: "normal" | "bold" | "italic" = "normal", color: [number, number, number] = [0, 0, 0]) => {
     doc.setFontSize(size);
@@ -18,42 +18,43 @@ export async function generateResume(portfolioUrl?: string) {
     doc.setTextColor(...color);
   };
 
-  const lineHeight = (size: number) => size * 0.4;
+  // ~1.3x line height for readable spacing
+  const lineHeight = (size: number) => size * 0.5;
 
   const checkPage = (needed: number) => {
-    if (y + needed > pageHeight - 15) {
+    if (y + needed > pageHeight - 20) {
       doc.addPage();
-      y = 15;
+      y = 22;
     }
   };
 
   const addSectionHeading = (title: string) => {
-    checkPage(10);
-    y += 5;
-    setFont(11, "bold");
+    checkPage(14);
+    y += 7; // consistent gap before each section
+    setFont(12, "bold");
     doc.text(title.toUpperCase(), mL, y);
-    y += 1;
+    y += 1.5;
     doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(0.4);
     doc.line(mL, y, pageWidth - mR, y);
-    y += 4;
+    y += 5; // gap after rule before content
   };
 
-  const addBulletPoint = (text: string, indent = mL + 3) => {
-    checkPage(6);
-    setFont(9.5, "normal", [0, 0, 0]);
+  const addBulletPoint = (text: string, indent = mL + 4) => {
+    checkPage(8);
+    setFont(10.5, "normal", [0, 0, 0]);
     const bulletText = `\u2022  ${text}`;
     const lines = doc.splitTextToSize(bulletText, cW - (indent - mL));
     doc.text(lines, indent, y);
-    y += lines.length * lineHeight(9.5) + 1.2;
+    y += lines.length * lineHeight(10.5) + 2;
   };
 
-  const addText = (text: string, size = 9.5, style: "normal" | "bold" | "italic" = "normal", color: [number, number, number] = [0, 0, 0]) => {
-    checkPage(6);
+  const addText = (text: string, size = 10.5, style: "normal" | "bold" | "italic" = "normal", color: [number, number, number] = [0, 0, 0]) => {
+    checkPage(8);
     setFont(size, style, color);
     const lines = doc.splitTextToSize(text, cW);
     doc.text(lines, mL, y);
-    y += lines.length * lineHeight(size) + 1;
+    y += lines.length * lineHeight(size) + 2;
   };
 
   const formatDate = (iso?: string) => {
@@ -63,33 +64,33 @@ export async function generateResume(portfolioUrl?: string) {
   };
 
   // ═══════════════════════════════════════
-  // HEADER — Name, Role, Contact (no graphics)
+  // HEADER
   // ═══════════════════════════════════════
-  setFont(18, "bold");
+  setFont(16, "bold");
   doc.text(d.name.toUpperCase(), pageWidth / 2, y, { align: "center" });
-  y += 5;
+  y += 6;
 
-  setFont(10, "normal", [40, 40, 40]);
+  setFont(10.5, "normal", [0, 0, 0]);
   doc.text(d.role, pageWidth / 2, y, { align: "center" });
-  y += 4;
+  y += 5;
 
   const contactParts: string[] = [];
   if (d.email) contactParts.push(d.email);
   if (d.linkedin) contactParts.push(d.linkedin);
   if (d.github) contactParts.push(d.github);
   if (contactParts.length > 0) {
-    setFont(8.5, "normal", [40, 40, 40]);
+    setFont(9, "normal", [0, 0, 0]);
     const contactLine = contactParts.join("  |  ");
     const contactLines = doc.splitTextToSize(contactLine, cW);
     contactLines.forEach((line: string) => {
       doc.text(line, pageWidth / 2, y, { align: "center" });
-      y += 3.5;
+      y += 4;
     });
   }
-  y += 1;
+  y += 2;
 
   // ═══════════════════════════════════════
-  // SECTIONS — rendered in user-defined order
+  // SECTIONS
   // ═══════════════════════════════════════
   const sectionOrder: ResumeSectionId[] = d.resumeSelections?.sectionOrder || DEFAULT_SECTION_ORDER;
 
@@ -103,22 +104,22 @@ export async function generateResume(portfolioUrl?: string) {
   const sectionRenderers: Record<ResumeSectionId, () => void> = {
     summary: () => {
       addSectionHeading("Professional Summary");
-      addText(d.intro, 9.5, "normal", [0, 0, 0]);
+      addText(d.intro, 10.5, "normal", [0, 0, 0]);
     },
     skills: () => {
       addSectionHeading("Skills");
       skillCategories.forEach((cat) => {
         const skills = d.skills[cat];
         if (skills && skills.length > 0) {
-          checkPage(6);
-          setFont(9.5, "bold", [0, 0, 0]);
+          checkPage(8);
+          setFont(10.5, "bold", [0, 0, 0]);
           const label = `${catLabels[cat] || cat}: `;
           const labelW = doc.getTextWidth(label);
           doc.text(label, mL, y);
-          setFont(9.5, "normal", [0, 0, 0]);
+          setFont(10.5, "normal", [0, 0, 0]);
           const valLines = doc.splitTextToSize(skills.join(", "), cW - labelW);
           doc.text(valLines, mL + labelW, y);
-          y += valLines.length * lineHeight(9.5) + 1.5;
+          y += valLines.length * lineHeight(10.5) + 2.5;
         }
       });
     },
@@ -126,58 +127,58 @@ export async function generateResume(portfolioUrl?: string) {
       if (projects.length === 0) return;
       addSectionHeading("Projects");
       projects.forEach((p, idx) => {
-        checkPage(12);
-        setFont(10, "bold", [0, 0, 0]);
+        checkPage(14);
+        setFont(11, "bold", [0, 0, 0]);
         doc.text(p.title, mL, y);
         const pDates = [p.startDate && formatDate(p.startDate), p.endDate && formatDate(p.endDate)].filter(Boolean).join(" - ") || (p.singleDate ? formatDate(p.singleDate) : "");
         if (pDates) {
-          setFont(9, "normal", [0, 0, 0]);
+          setFont(10, "normal", [0, 0, 0]);
           doc.text(pDates, pageWidth - mR, y, { align: "right" });
         }
-        y += 4;
+        y += 5;
         if (p.techStack.length > 0) {
-          setFont(9, "italic", [0, 0, 0]);
+          setFont(10, "italic", [0, 0, 0]);
           doc.text(`Technologies: ${p.techStack.join(", ")}`, mL, y);
-          y += 3.5;
+          y += 4.5;
         }
         const descBullets = p.description.split(/\.\s*/).filter(s => s.trim().length > 0);
         descBullets.forEach((bullet) => {
           addBulletPoint(bullet.trim().replace(/\.$/, ""));
         });
         if (p.githubLink) {
-          setFont(8.5, "normal", [0, 0, 0]);
-          doc.text(`GitHub: ${p.githubLink}`, mL + 3, y);
-          y += 3.5;
+          setFont(9, "normal", [0, 0, 0]);
+          doc.text(`GitHub: ${p.githubLink}`, mL + 4, y);
+          y += 4;
         }
         if (p.demoUrl || p.link) {
-          setFont(8.5, "normal", [0, 0, 0]);
-          doc.text(`Link: ${p.demoUrl || p.link}`, mL + 3, y);
-          y += 3.5;
+          setFont(9, "normal", [0, 0, 0]);
+          doc.text(`Link: ${p.demoUrl || p.link}`, mL + 4, y);
+          y += 4;
         }
-        if (idx < projects.length - 1) y += 2;
+        if (idx < projects.length - 1) y += 3;
       });
     },
     experience: () => {
       if (internships.length === 0) return;
       addSectionHeading("Work Experience");
       internships.forEach((e, idx) => {
-        checkPage(12);
-        setFont(10, "bold", [0, 0, 0]);
+        checkPage(14);
+        setFont(11, "bold", [0, 0, 0]);
         doc.text(e.role, mL, y);
         const dates = [e.startDate && formatDate(e.startDate), e.endDate && formatDate(e.endDate)].filter(Boolean).join(" - ") || (e.singleDate ? formatDate(e.singleDate) : "") || e.duration;
         if (dates) {
-          setFont(9, "normal", [0, 0, 0]);
+          setFont(10, "normal", [0, 0, 0]);
           doc.text(dates, pageWidth - mR, y, { align: "right" });
         }
-        y += 4;
-        setFont(9.5, "italic", [0, 0, 0]);
+        y += 5;
+        setFont(10.5, "italic", [0, 0, 0]);
         doc.text(e.organization, mL, y);
-        y += 3.5;
+        y += 4.5;
         const respBullets = e.responsibilities.split(/\.\s*/).filter(s => s.trim().length > 0);
         respBullets.forEach((bullet) => {
           addBulletPoint(bullet.trim().replace(/\.$/, ""));
         });
-        if (idx < internships.length - 1) y += 2;
+        if (idx < internships.length - 1) y += 3;
       });
     },
     certifications: () => {
@@ -191,23 +192,23 @@ export async function generateResume(portfolioUrl?: string) {
       if (!d.education || d.education.length === 0) return;
       addSectionHeading("Education");
       d.education.forEach((edu, idx) => {
-        checkPage(10);
-        setFont(10, "bold", [0, 0, 0]);
+        checkPage(12);
+        setFont(11, "bold", [0, 0, 0]);
         doc.text(edu.course, mL, y);
-        y += 4;
-        setFont(9.5, "normal", [0, 0, 0]);
+        y += 5;
+        setFont(10.5, "normal", [0, 0, 0]);
         doc.text(edu.institution, mL, y);
         if (edu.duration) {
-          setFont(9, "normal", [0, 0, 0]);
+          setFont(10, "normal", [0, 0, 0]);
           doc.text(edu.duration, pageWidth - mR, y, { align: "right" });
         }
-        y += 3.5;
+        y += 4.5;
         if (edu.score) {
-          setFont(9, "normal", [0, 0, 0]);
+          setFont(10, "normal", [0, 0, 0]);
           doc.text(edu.score, mL, y);
-          y += 3.5;
+          y += 4.5;
         }
-        if (idx < d.education.length - 1) y += 1.5;
+        if (idx < d.education.length - 1) y += 2;
       });
     },
     achievements: () => {
@@ -224,7 +225,6 @@ export async function generateResume(portfolioUrl?: string) {
       sectionRenderers[sectionId]();
     }
   });
-
 
   doc.save(`${d.name.replace(/\s+/g, "_")}_Resume.pdf`);
 }
