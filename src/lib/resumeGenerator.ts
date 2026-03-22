@@ -97,7 +97,7 @@ export async function generateResume(portfolioUrl?: string) {
     languages: "Programming Languages",
     tools: "Tools & Technologies",
     platforms: "Platforms & IDEs",
-    other: "Soft Skills",
+    other: "Professional Skills",
   };
 
   const sectionRenderers: Record<ResumeSectionId, () => void> = {
