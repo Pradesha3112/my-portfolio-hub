@@ -103,7 +103,7 @@ export async function generateResume(portfolioUrl?: string) {
   const sectionRenderers: Record<ResumeSectionId, () => void> = {
     summary: () => {
       addSectionHeading("Professional Summary");
-      addText(d.intro, 9.5, "normal", [20, 20, 20]);
+      addText(d.intro, 9.5, "normal", [0, 0, 0]);
     },
     skills: () => {
       addSectionHeading("Skills");
@@ -111,11 +111,11 @@ export async function generateResume(portfolioUrl?: string) {
         const skills = d.skills[cat];
         if (skills && skills.length > 0) {
           checkPage(6);
-          setFont(9.5, "bold", [10, 10, 10]);
+          setFont(9.5, "bold", [0, 0, 0]);
           const label = `${catLabels[cat] || cat}: `;
           const labelW = doc.getTextWidth(label);
           doc.text(label, mL, y);
-          setFont(9.5, "normal", [30, 30, 30]);
+          setFont(9.5, "normal", [0, 0, 0]);
           const valLines = doc.splitTextToSize(skills.join(", "), cW - labelW);
           doc.text(valLines, mL + labelW, y);
           y += valLines.length * lineHeight(9.5) + 1.5;
@@ -131,12 +131,12 @@ export async function generateResume(portfolioUrl?: string) {
         doc.text(p.title, mL, y);
         const pDates = [p.startDate && formatDate(p.startDate), p.endDate && formatDate(p.endDate)].filter(Boolean).join(" - ") || (p.singleDate ? formatDate(p.singleDate) : "");
         if (pDates) {
-          setFont(8.5, "normal", [80, 80, 80]);
+          setFont(9, "normal", [0, 0, 0]);
           doc.text(pDates, pageWidth - mR, y, { align: "right" });
         }
         y += 4;
         if (p.techStack.length > 0) {
-          setFont(8.5, "italic", [60, 60, 60]);
+          setFont(9, "italic", [0, 0, 0]);
           doc.text(`Technologies: ${p.techStack.join(", ")}`, mL, y);
           y += 3.5;
         }
@@ -145,12 +145,12 @@ export async function generateResume(portfolioUrl?: string) {
           addBulletPoint(bullet.trim().replace(/\.$/, ""));
         });
         if (p.githubLink) {
-          setFont(8.5, "normal", [40, 40, 40]);
+          setFont(8.5, "normal", [0, 0, 0]);
           doc.text(`GitHub: ${p.githubLink}`, mL + 3, y);
           y += 3.5;
         }
         if (p.demoUrl || p.link) {
-          setFont(8.5, "normal", [40, 40, 40]);
+          setFont(8.5, "normal", [0, 0, 0]);
           doc.text(`Link: ${p.demoUrl || p.link}`, mL + 3, y);
           y += 3.5;
         }
@@ -159,18 +159,18 @@ export async function generateResume(portfolioUrl?: string) {
     },
     experience: () => {
       if (internships.length === 0) return;
-      addSectionHeading("Experience");
+      addSectionHeading("Work Experience");
       internships.forEach((e, idx) => {
         checkPage(12);
         setFont(10, "bold", [0, 0, 0]);
         doc.text(e.role, mL, y);
         const dates = [e.startDate && formatDate(e.startDate), e.endDate && formatDate(e.endDate)].filter(Boolean).join(" - ") || (e.singleDate ? formatDate(e.singleDate) : "") || e.duration;
         if (dates) {
-          setFont(8.5, "normal", [80, 80, 80]);
+          setFont(9, "normal", [0, 0, 0]);
           doc.text(dates, pageWidth - mR, y, { align: "right" });
         }
         y += 4;
-        setFont(9.5, "italic", [50, 50, 50]);
+        setFont(9.5, "italic", [0, 0, 0]);
         doc.text(e.organization, mL, y);
         y += 3.5;
         const respBullets = e.responsibilities.split(/\.\s*/).filter(s => s.trim().length > 0);
@@ -195,15 +195,15 @@ export async function generateResume(portfolioUrl?: string) {
         setFont(10, "bold", [0, 0, 0]);
         doc.text(edu.course, mL, y);
         y += 4;
-        setFont(9.5, "normal", [40, 40, 40]);
+        setFont(9.5, "normal", [0, 0, 0]);
         doc.text(edu.institution, mL, y);
         if (edu.duration) {
-          setFont(8.5, "normal", [80, 80, 80]);
+          setFont(9, "normal", [0, 0, 0]);
           doc.text(edu.duration, pageWidth - mR, y, { align: "right" });
         }
         y += 3.5;
         if (edu.score) {
-          setFont(8.5, "normal", [50, 50, 50]);
+          setFont(9, "normal", [0, 0, 0]);
           doc.text(edu.score, mL, y);
           y += 3.5;
         }
