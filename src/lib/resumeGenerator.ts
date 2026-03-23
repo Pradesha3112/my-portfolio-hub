@@ -69,11 +69,11 @@ export async function generateResume(portfolioUrl?: string) {
   // ═══════════════════════════════════════
   // HEADER
   // ═══════════════════════════════════════
-  setFont(16, "bold");
+  setFont(fmt.nameFontSize, "bold");
   doc.text(d.name.toUpperCase(), pageWidth / 2, y, { align: "center" });
   y += 6;
 
-  setFont(10.5, "normal", [0, 0, 0]);
+  setFont(fmt.bodyFontSize, "normal", [0, 0, 0]);
   doc.text(d.role, pageWidth / 2, y, { align: "center" });
   y += 5;
 
@@ -82,7 +82,7 @@ export async function generateResume(portfolioUrl?: string) {
   if (d.linkedin) contactParts.push(d.linkedin);
   if (d.github) contactParts.push(d.github);
   if (contactParts.length > 0) {
-    setFont(9, "normal", [0, 0, 0]);
+    setFont(fmt.contactFontSize, "normal", [0, 0, 0]);
     const contactLine = contactParts.join("  |  ");
     const contactLines = doc.splitTextToSize(contactLine, cW);
     contactLines.forEach((line: string) => {
