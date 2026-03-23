@@ -106,8 +106,9 @@ export async function generateResume(portfolioUrl?: string) {
 
   const sectionRenderers: Record<ResumeSectionId, () => void> = {
     summary: () => {
+      if (fmt.hiddenSections.includes("summary")) return;
       addSectionHeading("Professional Summary");
-      addText(d.intro, 10.5, "normal", [0, 0, 0]);
+      addText(d.intro);
     },
     skills: () => {
       addSectionHeading("Skills");
