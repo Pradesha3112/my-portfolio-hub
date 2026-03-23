@@ -60,6 +60,34 @@ export const DEFAULT_SECTION_ORDER: ResumeSectionId[] = [
   "summary", "skills", "projects", "experience", "certifications", "education", "achievements"
 ];
 
+export interface ResumeFormatting {
+  nameFontSize: number;
+  headingFontSize: number;
+  bodyFontSize: number;
+  contactFontSize: number;
+  marginMM: number;
+  sectionGapBefore: number;
+  sectionGapAfter: number;
+  bulletSpacing: number;
+  lineHeightMultiplier: number;
+  showSectionLines: boolean;
+  hiddenSections: ResumeSectionId[];
+}
+
+export const DEFAULT_FORMATTING: ResumeFormatting = {
+  nameFontSize: 16,
+  headingFontSize: 12,
+  bodyFontSize: 10.5,
+  contactFontSize: 9,
+  marginMM: 25.4,
+  sectionGapBefore: 7,
+  sectionGapAfter: 5,
+  bulletSpacing: 2,
+  lineHeightMultiplier: 1.3,
+  showSectionLines: true,
+  hiddenSections: [],
+};
+
 export interface ResumeSelections {
   selectedProjects: string[];
   selectedInternships: string[];
@@ -88,6 +116,7 @@ export interface PortfolioData {
   certifications: Certification[];
   achievements: string[];
   resumeSelections: ResumeSelections;
+  resumeFormatting: ResumeFormatting;
   lastEdited: string;
 }
 
@@ -189,6 +218,7 @@ const defaultData: PortfolioData = {
     selectedSkillCategories: ["languages", "tools", "platforms", "other"],
     sectionOrder: ["summary", "skills", "experience", "projects", "certifications", "education", "achievements"],
   },
+  resumeFormatting: { ...DEFAULT_FORMATTING },
   lastEdited: new Date().toISOString(),
 };
 
@@ -206,6 +236,9 @@ export function getPortfolioData(): PortfolioData {
       }
       if (!parsed.resumeSelections.sectionOrder) {
         parsed.resumeSelections.sectionOrder = defaultData.resumeSelections.sectionOrder;
+      }
+      if (!parsed.resumeFormatting) {
+        parsed.resumeFormatting = { ...DEFAULT_FORMATTING };
       }
       return parsed;
     } catch {
