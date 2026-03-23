@@ -13,6 +13,15 @@ export async function generateResume(portfolioUrl?: string) {
   const cW = pageWidth - mL - mR;
   let y = 22;
 
+  const hexToRgb = (hex: string): [number, number, number] => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return [r, g, b];
+  };
+
+  const headingRgb = hexToRgb(fmt.headingColor || "#000000");
+
   const setFont = (size: number, style: "normal" | "bold" | "italic" = "normal", color: [number, number, number] = [0, 0, 0]) => {
     doc.setFontSize(size);
     doc.setFont("helvetica", style);
@@ -31,11 +40,11 @@ export async function generateResume(portfolioUrl?: string) {
   const addSectionHeading = (title: string) => {
     checkPage(14);
     y += fmt.sectionGapBefore;
-    setFont(fmt.headingFontSize, "bold");
+    setFont(fmt.headingFontSize, fmt.headingStyle || "bold", headingRgb);
     doc.text(title.toUpperCase(), mL, y);
     if (fmt.showSectionLines) {
       y += 1.5;
-      doc.setDrawColor(0, 0, 0);
+      doc.setDrawColor(...headingRgb);
       doc.setLineWidth(0.4);
       doc.line(mL, y, pageWidth - mR, y);
     }
@@ -69,7 +78,7 @@ export async function generateResume(portfolioUrl?: string) {
   // ═══════════════════════════════════════
   // HEADER
   // ═══════════════════════════════════════
-  setFont(fmt.nameFontSize, "bold");
+  setFont(fmt.nameFontSize, fmt.nameStyle || "bold");
   doc.text(d.name.toUpperCase(), pageWidth / 2, y, { align: "center" });
   y += 6;
 

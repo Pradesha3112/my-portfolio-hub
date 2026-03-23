@@ -13,7 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { LogOut, Trash2, Plus, Undo2, RotateCcw, Save, Palette, Check, Calendar as CalendarIcon, Image, Video, Eye, FileText, AlertTriangle, ArrowUp, ArrowDown, GripVertical, Settings2, EyeOff } from "lucide-react";
+import { LogOut, Trash2, Plus, Undo2, RotateCcw, Save, Palette, Check, Calendar as CalendarIcon, Image, Video, Eye, FileText, AlertTriangle, ArrowUp, ArrowDown, GripVertical, Settings2, EyeOff, Type } from "lucide-react";
+import ResumePreview from "@/components/ResumePreview";
 import { themeOptions, getSavedTheme, saveTheme, type ThemeOption } from "@/lib/themeManager";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -436,134 +437,210 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Document Formatter */}
+        {/* Document Formatter with Live Preview */}
         {activeTab === "format" && (
-          <div className="max-w-3xl space-y-8">
-            <div>
-              <h2 className="text-xl font-semibold text-foreground mb-1 flex items-center gap-2">
-                <Settings2 className="h-5 w-5" /> Document Formatter
-              </h2>
-              <p className="text-sm text-muted-foreground mb-6">Customize resume spacing, font sizes, margins, and section visibility. Changes apply to the exported PDF.</p>
-            </div>
-
-            {/* Font Sizes */}
-            <div className="rounded-lg border border-border bg-card p-5 space-y-5">
-              <h3 className="font-semibold text-card-foreground">Font Sizes (pt)</h3>
-              {([
-                { key: "nameFontSize" as const, label: "Name", min: 12, max: 24 },
-                { key: "headingFontSize" as const, label: "Section Headings", min: 9, max: 16 },
-                { key: "bodyFontSize" as const, label: "Body Text", min: 8, max: 14 },
-                { key: "contactFontSize" as const, label: "Contact Info", min: 7, max: 12 },
-              ]).map(({ key, label, min, max }) => (
-                <div key={key} className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <Label>{label}</Label>
-                    <span className="text-muted-foreground font-mono">{data.resumeFormatting?.[key] ?? DEFAULT_FORMATTING[key]}pt</span>
-                  </div>
-                  <Slider
-                    min={min}
-                    max={max}
-                    step={0.5}
-                    value={[data.resumeFormatting?.[key] ?? DEFAULT_FORMATTING[key]]}
-                    onValueChange={([v]) => update((d) => ({
-                      ...d,
-                      resumeFormatting: { ...DEFAULT_FORMATTING, ...d.resumeFormatting, [key]: v },
-                    }))}
-                  />
-                </div>
-              ))}
-            </div>
-
-            {/* Spacing */}
-            <div className="rounded-lg border border-border bg-card p-5 space-y-5">
-              <h3 className="font-semibold text-card-foreground">Spacing & Margins</h3>
-              {([
-                { key: "marginMM" as const, label: "Page Margins (mm)", min: 10, max: 35, step: 1 },
-                { key: "sectionGapBefore" as const, label: "Gap Before Section Heading", min: 2, max: 15, step: 0.5 },
-                { key: "sectionGapAfter" as const, label: "Gap After Section Heading", min: 2, max: 10, step: 0.5 },
-                { key: "bulletSpacing" as const, label: "Bullet / Paragraph Spacing", min: 0.5, max: 5, step: 0.5 },
-                { key: "lineHeightMultiplier" as const, label: "Line Height Multiplier", min: 1, max: 2, step: 0.1 },
-              ]).map(({ key, label, min, max, step }) => (
-                <div key={key} className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <Label>{label}</Label>
-                    <span className="text-muted-foreground font-mono">{data.resumeFormatting?.[key] ?? DEFAULT_FORMATTING[key]}</span>
-                  </div>
-                  <Slider
-                    min={min}
-                    max={max}
-                    step={step}
-                    value={[data.resumeFormatting?.[key] ?? DEFAULT_FORMATTING[key]]}
-                    onValueChange={([v]) => update((d) => ({
-                      ...d,
-                      resumeFormatting: { ...DEFAULT_FORMATTING, ...d.resumeFormatting, [key]: v },
-                    }))}
-                  />
-                </div>
-              ))}
-            </div>
-
-            {/* Section Lines & Visibility */}
-            <div className="rounded-lg border border-border bg-card p-5 space-y-5">
-              <h3 className="font-semibold text-card-foreground">Section Options</h3>
-              <div className="flex items-center gap-3">
-                <Switch
-                  checked={data.resumeFormatting?.showSectionLines ?? DEFAULT_FORMATTING.showSectionLines}
-                  onCheckedChange={(v) => update((d) => ({
-                    ...d,
-                    resumeFormatting: { ...DEFAULT_FORMATTING, ...d.resumeFormatting, showSectionLines: v },
-                  }))}
-                />
-                <Label>Show horizontal lines under section headings</Label>
-              </div>
-
+          <div className="flex gap-6 flex-col lg:flex-row">
+            {/* Controls Panel */}
+            <div className="w-full lg:w-[420px] shrink-0 space-y-6">
               <div>
-                <p className="text-sm font-medium text-foreground mb-2 flex items-center gap-1"><EyeOff className="h-4 w-4" /> Hide Sections from Resume</p>
-                <div className="space-y-2">
-                  {(["summary", "skills", "projects", "experience", "certifications", "education", "achievements"] as ResumeSectionId[]).map((sec) => {
-                    const labels: Record<ResumeSectionId, string> = {
-                      summary: "Professional Summary", skills: "Skills", projects: "Projects",
-                      experience: "Work Experience", certifications: "Certifications",
-                      education: "Education", achievements: "Achievements",
-                    };
-                    const hidden = data.resumeFormatting?.hiddenSections ?? [];
-                    return (
-                      <label key={sec} className="flex items-center gap-2 text-sm text-foreground">
-                        <Checkbox
-                          checked={hidden.includes(sec)}
-                          onCheckedChange={(checked) => {
-                            update((d) => {
-                              const current = d.resumeFormatting?.hiddenSections ?? [];
-                              const next = checked ? [...current, sec] : current.filter((s) => s !== sec);
-                              return { ...d, resumeFormatting: { ...DEFAULT_FORMATTING, ...d.resumeFormatting, hiddenSections: next } };
-                            });
-                          }}
-                        />
-                        {labels[sec]}
-                      </label>
-                    );
-                  })}
+                <h2 className="text-xl font-semibold text-foreground mb-1 flex items-center gap-2">
+                  <Settings2 className="h-5 w-5" /> Document Formatter
+                </h2>
+                <p className="text-sm text-muted-foreground mb-4">Changes update the preview instantly.</p>
+              </div>
+
+              {/* Font Sizes */}
+              <div className="rounded-lg border border-border bg-card p-4 space-y-4">
+                <h3 className="font-semibold text-card-foreground text-sm">Font Sizes (pt)</h3>
+                {([
+                  { key: "nameFontSize" as const, label: "Name", min: 12, max: 24 },
+                  { key: "headingFontSize" as const, label: "Section Headings", min: 9, max: 16 },
+                  { key: "bodyFontSize" as const, label: "Body Text", min: 8, max: 14 },
+                  { key: "contactFontSize" as const, label: "Contact Info", min: 7, max: 12 },
+                ]).map(({ key, label, min, max }) => (
+                  <div key={key} className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <Label>{label}</Label>
+                      <span className="text-muted-foreground font-mono text-xs">{data.resumeFormatting?.[key] ?? DEFAULT_FORMATTING[key]}pt</span>
+                    </div>
+                    <Slider
+                      min={min} max={max} step={0.5}
+                      value={[data.resumeFormatting?.[key] ?? DEFAULT_FORMATTING[key]]}
+                      onValueChange={([v]) => update((d) => ({
+                        ...d,
+                        resumeFormatting: { ...DEFAULT_FORMATTING, ...d.resumeFormatting, [key]: v },
+                      }))}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Font Styles */}
+              <div className="rounded-lg border border-border bg-card p-4 space-y-4">
+                <h3 className="font-semibold text-card-foreground text-sm flex items-center gap-1"><Type className="h-4 w-4" /> Font Styles</h3>
+                {([
+                  { key: "nameStyle" as const, label: "Name Style" },
+                  { key: "headingStyle" as const, label: "Heading Style" },
+                  { key: "bodyStyle" as const, label: "Body Style" },
+                ]).map(({ key, label }) => (
+                  <div key={key} className="flex items-center justify-between">
+                    <Label className="text-sm">{label}</Label>
+                    <Select
+                      value={data.resumeFormatting?.[key] ?? DEFAULT_FORMATTING[key]}
+                      onValueChange={(v) => update((d) => ({
+                        ...d,
+                        resumeFormatting: { ...DEFAULT_FORMATTING, ...d.resumeFormatting, [key]: v },
+                      }))}
+                    >
+                      <SelectTrigger className="w-32 h-8"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="normal">Normal</SelectItem>
+                        <SelectItem value="bold">Bold</SelectItem>
+                        <SelectItem value="italic">Italic</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+              </div>
+
+              {/* Heading Color */}
+              <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+                <h3 className="font-semibold text-card-foreground text-sm flex items-center gap-1"><Palette className="h-4 w-4" /> Heading Color</h3>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={data.resumeFormatting?.headingColor ?? DEFAULT_FORMATTING.headingColor}
+                    onChange={(e) => update((d) => ({
+                      ...d,
+                      resumeFormatting: { ...DEFAULT_FORMATTING, ...d.resumeFormatting, headingColor: e.target.value },
+                    }))}
+                    className="w-10 h-10 rounded border border-border cursor-pointer"
+                  />
+                  <span className="text-sm text-muted-foreground font-mono">
+                    {data.resumeFormatting?.headingColor ?? DEFAULT_FORMATTING.headingColor}
+                  </span>
+                  <div className="flex gap-1 ml-auto">
+                    {["#000000", "#1a365d", "#2d3748", "#1e40af", "#065f46", "#7c3aed"].map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => update((d) => ({
+                          ...d,
+                          resumeFormatting: { ...DEFAULT_FORMATTING, ...d.resumeFormatting, headingColor: c },
+                        }))}
+                        className="w-6 h-6 rounded-full border border-border hover:scale-110 transition-transform"
+                        style={{ backgroundColor: c }}
+                        title={c}
+                      />
+                    ))}
+                  </div>
                 </div>
+              </div>
+
+              {/* Spacing */}
+              <div className="rounded-lg border border-border bg-card p-4 space-y-4">
+                <h3 className="font-semibold text-card-foreground text-sm">Spacing & Margins</h3>
+                {([
+                  { key: "marginMM" as const, label: "Page Margins (mm)", min: 10, max: 35, step: 1 },
+                  { key: "sectionGapBefore" as const, label: "Gap Before Heading", min: 2, max: 15, step: 0.5 },
+                  { key: "sectionGapAfter" as const, label: "Gap After Heading", min: 2, max: 10, step: 0.5 },
+                  { key: "bulletSpacing" as const, label: "Bullet Spacing", min: 0.5, max: 5, step: 0.5 },
+                  { key: "lineHeightMultiplier" as const, label: "Line Height", min: 1, max: 2, step: 0.1 },
+                ]).map(({ key, label, min, max, step }) => (
+                  <div key={key} className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <Label>{label}</Label>
+                      <span className="text-muted-foreground font-mono text-xs">{data.resumeFormatting?.[key] ?? DEFAULT_FORMATTING[key]}</span>
+                    </div>
+                    <Slider
+                      min={min} max={max} step={step}
+                      value={[data.resumeFormatting?.[key] ?? DEFAULT_FORMATTING[key]]}
+                      onValueChange={([v]) => update((d) => ({
+                        ...d,
+                        resumeFormatting: { ...DEFAULT_FORMATTING, ...d.resumeFormatting, [key]: v },
+                      }))}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Section Options */}
+              <div className="rounded-lg border border-border bg-card p-4 space-y-4">
+                <h3 className="font-semibold text-card-foreground text-sm">Section Options</h3>
+                <div className="flex items-center gap-3">
+                  <Switch
+                    checked={data.resumeFormatting?.showSectionLines ?? DEFAULT_FORMATTING.showSectionLines}
+                    onCheckedChange={(v) => update((d) => ({
+                      ...d,
+                      resumeFormatting: { ...DEFAULT_FORMATTING, ...d.resumeFormatting, showSectionLines: v },
+                    }))}
+                  />
+                  <Label className="text-sm">Show section divider lines</Label>
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium text-foreground mb-2 flex items-center gap-1"><EyeOff className="h-4 w-4" /> Hide Sections</p>
+                  <div className="space-y-1.5">
+                    {(["summary", "skills", "projects", "experience", "certifications", "education", "achievements"] as ResumeSectionId[]).map((sec) => {
+                      const labels: Record<ResumeSectionId, string> = {
+                        summary: "Professional Summary", skills: "Skills", projects: "Projects",
+                        experience: "Work Experience", certifications: "Certifications",
+                        education: "Education", achievements: "Achievements",
+                      };
+                      const hidden = data.resumeFormatting?.hiddenSections ?? [];
+                      return (
+                        <label key={sec} className="flex items-center gap-2 text-sm text-foreground">
+                          <Checkbox
+                            checked={hidden.includes(sec)}
+                            onCheckedChange={(checked) => {
+                              update((d) => {
+                                const current = d.resumeFormatting?.hiddenSections ?? [];
+                                const next = checked ? [...current, sec] : current.filter((s) => s !== sec);
+                                return { ...d, resumeFormatting: { ...DEFAULT_FORMATTING, ...d.resumeFormatting, hiddenSections: next } };
+                              });
+                            }}
+                          />
+                          {labels[sec]}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 flex-wrap">
+                <Button size="sm" onClick={() => toast.success("Formatting saved!")} className="gap-1">
+                  <Save className="h-4 w-4" /> Save
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => {
+                  update((d) => ({ ...d, resumeFormatting: { ...DEFAULT_FORMATTING } }));
+                  toast.info("Reset to defaults");
+                }} className="gap-1">
+                  <RotateCcw className="h-4 w-4" /> Reset
+                </Button>
+                <Button size="sm" variant="outline" onClick={async () => {
+                  try { await generateResume(); toast.success("Resume downloaded!"); }
+                  catch { toast.error("Failed to generate resume"); }
+                }} className="gap-1">
+                  <FileText className="h-4 w-4" /> Download PDF
+                </Button>
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="flex gap-3 flex-wrap">
-              <Button onClick={() => toast.success("Formatting saved!")} className="gap-1">
-                <Save className="h-4 w-4" /> Save Formatting
-              </Button>
-              <Button variant="outline" onClick={() => {
-                update((d) => ({ ...d, resumeFormatting: { ...DEFAULT_FORMATTING } }));
-                toast.info("Formatting reset to defaults");
-              }} className="gap-1">
-                <RotateCcw className="h-4 w-4" /> Reset to Defaults
-              </Button>
-              <Button variant="outline" onClick={async () => {
-                try { await generateResume(); toast.success("Resume downloaded!"); }
-                catch { toast.error("Failed to generate resume"); }
-              }} className="gap-1">
-                <FileText className="h-4 w-4" /> Preview Download
-              </Button>
+            {/* Live Preview Panel */}
+            <div className="flex-1 min-w-0">
+              <div className="sticky top-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Eye className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium text-muted-foreground">Live Preview</span>
+                  <span className="ml-auto text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">Updates instantly</span>
+                </div>
+                <div className="overflow-auto max-h-[calc(100vh-120px)] rounded-lg border border-border">
+                  <div style={{ transform: "scale(0.75)", transformOrigin: "top left", width: "133.33%" }}>
+                    <ResumePreview data={data} />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
