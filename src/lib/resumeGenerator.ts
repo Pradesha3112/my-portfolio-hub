@@ -111,6 +111,7 @@ export async function generateResume(portfolioUrl?: string) {
       addText(d.intro);
     },
     skills: () => {
+      if (fmt.hiddenSections.includes("skills")) return;
       addSectionHeading("Skills");
       skillCategories.forEach((cat) => {
         const skills = d.skills[cat];
