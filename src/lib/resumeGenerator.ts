@@ -78,7 +78,7 @@ export async function generateResume(portfolioUrl?: string) {
   // ═══════════════════════════════════════
   // HEADER
   // ═══════════════════════════════════════
-  setFont(fmt.nameFontSize, "bold");
+  setFont(fmt.nameFontSize, fmt.nameStyle || "bold");
   doc.text(d.name.toUpperCase(), pageWidth / 2, y, { align: "center" });
   y += 6;
 
