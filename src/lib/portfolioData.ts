@@ -90,6 +90,10 @@ export const DEFAULT_FORMATTING: ResumeFormatting = {
   lineHeightMultiplier: 1.3,
   showSectionLines: true,
   hiddenSections: [],
+  headingColor: "#000000",
+  nameStyle: "bold",
+  headingStyle: "bold",
+  bodyStyle: "normal",
 };
 
 export interface ResumeSelections {
