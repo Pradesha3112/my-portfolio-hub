@@ -237,6 +237,9 @@ export function getPortfolioData(): PortfolioData {
       if (!parsed.resumeSelections.sectionOrder) {
         parsed.resumeSelections.sectionOrder = defaultData.resumeSelections.sectionOrder;
       }
+      if (!parsed.resumeFormatting) {
+        parsed.resumeFormatting = { ...DEFAULT_FORMATTING };
+      }
       return parsed;
     } catch {
       return defaultData;
