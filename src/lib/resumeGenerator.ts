@@ -129,7 +129,7 @@ export async function generateResume(portfolioUrl?: string) {
       });
     },
     projects: () => {
-      if (projects.length === 0) return;
+      if (projects.length === 0 || fmt.hiddenSections.includes("projects")) return;
       addSectionHeading("Projects");
       projects.forEach((p, idx) => {
         checkPage(14);
