@@ -436,7 +436,139 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Theme Settings */}
+        {/* Document Formatter */}
+        {activeTab === "format" && (
+          <div className="max-w-3xl space-y-8">
+            <div>
+              <h2 className="text-xl font-semibold text-foreground mb-1 flex items-center gap-2">
+                <Settings2 className="h-5 w-5" /> Document Formatter
+              </h2>
+              <p className="text-sm text-muted-foreground mb-6">Customize resume spacing, font sizes, margins, and section visibility. Changes apply to the exported PDF.</p>
+            </div>
+
+            {/* Font Sizes */}
+            <div className="rounded-lg border border-border bg-card p-5 space-y-5">
+              <h3 className="font-semibold text-card-foreground">Font Sizes (pt)</h3>
+              {([
+                { key: "nameFontSize" as const, label: "Name", min: 12, max: 24 },
+                { key: "headingFontSize" as const, label: "Section Headings", min: 9, max: 16 },
+                { key: "bodyFontSize" as const, label: "Body Text", min: 8, max: 14 },
+                { key: "contactFontSize" as const, label: "Contact Info", min: 7, max: 12 },
+              ]).map(({ key, label, min, max }) => (
+                <div key={key} className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <Label>{label}</Label>
+                    <span className="text-muted-foreground font-mono">{data.resumeFormatting?.[key] ?? DEFAULT_FORMATTING[key]}pt</span>
+                  </div>
+                  <Slider
+                    min={min}
+                    max={max}
+                    step={0.5}
+                    value={[data.resumeFormatting?.[key] ?? DEFAULT_FORMATTING[key]]}
+                    onValueChange={([v]) => update((d) => ({
+                      ...d,
+                      resumeFormatting: { ...DEFAULT_FORMATTING, ...d.resumeFormatting, [key]: v },
+                    }))}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Spacing */}
+            <div className="rounded-lg border border-border bg-card p-5 space-y-5">
+              <h3 className="font-semibold text-card-foreground">Spacing & Margins</h3>
+              {([
+                { key: "marginMM" as const, label: "Page Margins (mm)", min: 10, max: 35, step: 1 },
+                { key: "sectionGapBefore" as const, label: "Gap Before Section Heading", min: 2, max: 15, step: 0.5 },
+                { key: "sectionGapAfter" as const, label: "Gap After Section Heading", min: 2, max: 10, step: 0.5 },
+                { key: "bulletSpacing" as const, label: "Bullet / Paragraph Spacing", min: 0.5, max: 5, step: 0.5 },
+                { key: "lineHeightMultiplier" as const, label: "Line Height Multiplier", min: 1, max: 2, step: 0.1 },
+              ]).map(({ key, label, min, max, step }) => (
+                <div key={key} className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <Label>{label}</Label>
+                    <span className="text-muted-foreground font-mono">{data.resumeFormatting?.[key] ?? DEFAULT_FORMATTING[key]}</span>
+                  </div>
+                  <Slider
+                    min={min}
+                    max={max}
+                    step={step}
+                    value={[data.resumeFormatting?.[key] ?? DEFAULT_FORMATTING[key]]}
+                    onValueChange={([v]) => update((d) => ({
+                      ...d,
+                      resumeFormatting: { ...DEFAULT_FORMATTING, ...d.resumeFormatting, [key]: v },
+                    }))}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Section Lines & Visibility */}
+            <div className="rounded-lg border border-border bg-card p-5 space-y-5">
+              <h3 className="font-semibold text-card-foreground">Section Options</h3>
+              <div className="flex items-center gap-3">
+                <Switch
+                  checked={data.resumeFormatting?.showSectionLines ?? DEFAULT_FORMATTING.showSectionLines}
+                  onCheckedChange={(v) => update((d) => ({
+                    ...d,
+                    resumeFormatting: { ...DEFAULT_FORMATTING, ...d.resumeFormatting, showSectionLines: v },
+                  }))}
+                />
+                <Label>Show horizontal lines under section headings</Label>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-foreground mb-2 flex items-center gap-1"><EyeOff className="h-4 w-4" /> Hide Sections from Resume</p>
+                <div className="space-y-2">
+                  {(["summary", "skills", "projects", "experience", "certifications", "education", "achievements"] as ResumeSectionId[]).map((sec) => {
+                    const labels: Record<ResumeSectionId, string> = {
+                      summary: "Professional Summary", skills: "Skills", projects: "Projects",
+                      experience: "Work Experience", certifications: "Certifications",
+                      education: "Education", achievements: "Achievements",
+                    };
+                    const hidden = data.resumeFormatting?.hiddenSections ?? [];
+                    return (
+                      <label key={sec} className="flex items-center gap-2 text-sm text-foreground">
+                        <Checkbox
+                          checked={hidden.includes(sec)}
+                          onCheckedChange={(checked) => {
+                            update((d) => {
+                              const current = d.resumeFormatting?.hiddenSections ?? [];
+                              const next = checked ? [...current, sec] : current.filter((s) => s !== sec);
+                              return { ...d, resumeFormatting: { ...DEFAULT_FORMATTING, ...d.resumeFormatting, hiddenSections: next } };
+                            });
+                          }}
+                        />
+                        {labels[sec]}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 flex-wrap">
+              <Button onClick={() => toast.success("Formatting saved!")} className="gap-1">
+                <Save className="h-4 w-4" /> Save Formatting
+              </Button>
+              <Button variant="outline" onClick={() => {
+                update((d) => ({ ...d, resumeFormatting: { ...DEFAULT_FORMATTING } }));
+                toast.info("Formatting reset to defaults");
+              }} className="gap-1">
+                <RotateCcw className="h-4 w-4" /> Reset to Defaults
+              </Button>
+              <Button variant="outline" onClick={async () => {
+                try { await generateResume(); toast.success("Resume downloaded!"); }
+                catch { toast.error("Failed to generate resume"); }
+              }} className="gap-1">
+                <FileText className="h-4 w-4" /> Preview Download
+              </Button>
+            </div>
+          </div>
+        )}
+
+
         {activeTab === "theme" && (
           <div className="max-w-2xl space-y-6">
             <div>
