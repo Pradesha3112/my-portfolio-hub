@@ -117,14 +117,14 @@ export async function generateResume(portfolioUrl?: string) {
         const skills = d.skills[cat];
         if (skills && skills.length > 0) {
           checkPage(8);
-          setFont(10.5, "bold", [0, 0, 0]);
+          setFont(fmt.bodyFontSize, "bold", [0, 0, 0]);
           const label = `${catLabels[cat] || cat}: `;
           const labelW = doc.getTextWidth(label);
           doc.text(label, mL, y);
-          setFont(10.5, "normal", [0, 0, 0]);
+          setFont(fmt.bodyFontSize, "normal", [0, 0, 0]);
           const valLines = doc.splitTextToSize(skills.join(", "), cW - labelW);
           doc.text(valLines, mL + labelW, y);
-          y += valLines.length * lineHeight(10.5) + 2.5;
+          y += valLines.length * lineHeight(fmt.bodyFontSize) + 2.5;
         }
       });
     },
