@@ -164,7 +164,7 @@ export async function generateResume(portfolioUrl?: string) {
       });
     },
     experience: () => {
-      if (internships.length === 0) return;
+      if (internships.length === 0 || fmt.hiddenSections.includes("experience")) return;
       addSectionHeading("Work Experience");
       internships.forEach((e, idx) => {
         checkPage(14);
