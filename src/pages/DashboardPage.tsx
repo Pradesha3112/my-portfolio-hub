@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { LogOut, Trash2, Plus, Undo2, RotateCcw, Save, Palette, Check, Calendar as CalendarIcon, Image, Video, Eye, FileText, AlertTriangle, ArrowUp, ArrowDown, GripVertical, Settings2, EyeOff } from "lucide-react";
