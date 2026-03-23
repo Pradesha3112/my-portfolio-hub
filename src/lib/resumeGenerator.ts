@@ -51,12 +51,13 @@ export async function generateResume(portfolioUrl?: string) {
     y += lines.length * lineHeight(fmt.bodyFontSize) + fmt.bulletSpacing;
   };
 
-  const addText = (text: string, size = 10.5, style: "normal" | "bold" | "italic" = "normal", color: [number, number, number] = [0, 0, 0]) => {
+  const addText = (text: string, size?: number, style: "normal" | "bold" | "italic" = "normal", color: [number, number, number] = [0, 0, 0]) => {
+    const sz = size ?? fmt.bodyFontSize;
     checkPage(8);
-    setFont(size, style, color);
+    setFont(sz, style, color);
     const lines = doc.splitTextToSize(text, cW);
     doc.text(lines, mL, y);
-    y += lines.length * lineHeight(size) + 2;
+    y += lines.length * lineHeight(sz) + fmt.bulletSpacing;
   };
 
   const formatDate = (iso?: string) => {
