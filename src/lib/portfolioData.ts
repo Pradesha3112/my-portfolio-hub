@@ -218,6 +218,7 @@ const defaultData: PortfolioData = {
     selectedSkillCategories: ["languages", "tools", "platforms", "other"],
     sectionOrder: ["summary", "skills", "experience", "projects", "certifications", "education", "achievements"],
   },
+  resumeFormatting: { ...DEFAULT_FORMATTING },
   lastEdited: new Date().toISOString(),
 };
 
