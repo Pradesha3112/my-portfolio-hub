@@ -194,7 +194,7 @@ export async function generateResume(portfolioUrl?: string) {
       });
     },
     education: () => {
-      if (!d.education || d.education.length === 0) return;
+      if (!d.education || d.education.length === 0 || fmt.hiddenSections.includes("education")) return;
       addSectionHeading("Education");
       d.education.forEach((edu, idx) => {
         checkPage(12);
