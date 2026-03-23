@@ -1,14 +1,15 @@
 import jsPDF from "jspdf";
-import { getPortfolioData, getResumeItems, DEFAULT_SECTION_ORDER, type ResumeSectionId } from "./portfolioData";
+import { getPortfolioData, getResumeItems, DEFAULT_SECTION_ORDER, DEFAULT_FORMATTING, type ResumeSectionId, type ResumeFormatting } from "./portfolioData";
 
 export async function generateResume(portfolioUrl?: string) {
   const d = getPortfolioData();
+  const fmt: ResumeFormatting = { ...DEFAULT_FORMATTING, ...d.resumeFormatting };
   const { projects, internships, certifications, skillCategories } = getResumeItems(d);
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const mL = 25.4; // 1 inch standard margin
-  const mR = 25.4;
+  const mL = fmt.marginMM;
+  const mR = fmt.marginMM;
   const cW = pageWidth - mL - mR;
   let y = 22;
 
@@ -18,8 +19,7 @@ export async function generateResume(portfolioUrl?: string) {
     doc.setTextColor(...color);
   };
 
-  // ~1.3x line height for readable spacing
-  const lineHeight = (size: number) => size * 0.5;
+  const lineHeight = (size: number) => size * 0.35 * fmt.lineHeightMultiplier;
 
   const checkPage = (needed: number) => {
     if (y + needed > pageHeight - 20) {
@@ -30,23 +30,25 @@ export async function generateResume(portfolioUrl?: string) {
 
   const addSectionHeading = (title: string) => {
     checkPage(14);
-    y += 7; // consistent gap before each section
-    setFont(12, "bold");
+    y += fmt.sectionGapBefore;
+    setFont(fmt.headingFontSize, "bold");
     doc.text(title.toUpperCase(), mL, y);
-    y += 1.5;
-    doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(0.4);
-    doc.line(mL, y, pageWidth - mR, y);
-    y += 5; // gap after rule before content
+    if (fmt.showSectionLines) {
+      y += 1.5;
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.4);
+      doc.line(mL, y, pageWidth - mR, y);
+    }
+    y += fmt.sectionGapAfter;
   };
 
   const addBulletPoint = (text: string, indent = mL + 4) => {
     checkPage(8);
-    setFont(10.5, "normal", [0, 0, 0]);
+    setFont(fmt.bodyFontSize, "normal", [0, 0, 0]);
     const bulletText = `\u2022  ${text}`;
     const lines = doc.splitTextToSize(bulletText, cW - (indent - mL));
     doc.text(lines, indent, y);
-    y += lines.length * lineHeight(10.5) + 2;
+    y += lines.length * lineHeight(fmt.bodyFontSize) + fmt.bulletSpacing;
   };
 
   const addText = (text: string, size = 10.5, style: "normal" | "bold" | "italic" = "normal", color: [number, number, number] = [0, 0, 0]) => {
