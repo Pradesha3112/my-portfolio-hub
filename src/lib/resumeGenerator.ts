@@ -187,7 +187,7 @@ export async function generateResume(portfolioUrl?: string) {
       });
     },
     certifications: () => {
-      if (certifications.length === 0) return;
+      if (certifications.length === 0 || fmt.hiddenSections.includes("certifications")) return;
       addSectionHeading("Certifications");
       certifications.forEach((c) => {
         addBulletPoint(`${c.title} — ${c.platform}${c.date ? ` (${c.date})` : ""}`);
