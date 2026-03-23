@@ -43,6 +43,7 @@ export default function DashboardPage() {
     { id: "skills", label: "Skills" },
     { id: "achievements", label: "Achievements" },
     { id: "resume", label: "📄 Resume" },
+    { id: "format", label: "📝 Format" },
     { id: "theme", label: "🎨 Theme" },
   ];
 
