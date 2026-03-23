@@ -40,11 +40,11 @@ export async function generateResume(portfolioUrl?: string) {
   const addSectionHeading = (title: string) => {
     checkPage(14);
     y += fmt.sectionGapBefore;
-    setFont(fmt.headingFontSize, "bold");
+    setFont(fmt.headingFontSize, fmt.headingStyle || "bold", headingRgb);
     doc.text(title.toUpperCase(), mL, y);
     if (fmt.showSectionLines) {
       y += 1.5;
-      doc.setDrawColor(0, 0, 0);
+      doc.setDrawColor(...headingRgb);
       doc.setLineWidth(0.4);
       doc.line(mL, y, pageWidth - mR, y);
     }
