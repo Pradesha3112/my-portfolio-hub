@@ -217,7 +217,7 @@ export async function generateResume(portfolioUrl?: string) {
       });
     },
     achievements: () => {
-      if (!d.achievements || d.achievements.length === 0) return;
+      if (!d.achievements || d.achievements.length === 0 || fmt.hiddenSections.includes("achievements")) return;
       addSectionHeading("Achievements");
       d.achievements.forEach((a) => {
         addBulletPoint(a);
