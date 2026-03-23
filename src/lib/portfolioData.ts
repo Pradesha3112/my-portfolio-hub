@@ -116,6 +116,7 @@ export interface PortfolioData {
   certifications: Certification[];
   achievements: string[];
   resumeSelections: ResumeSelections;
+  resumeFormatting: ResumeFormatting;
   lastEdited: string;
 }
 
