@@ -188,7 +188,14 @@ export async function generateResume(portfolioUrl?: string) {
         setFont(10.5, "italic", [0, 0, 0]);
         doc.text(e.organization, mL, y);
         y += fmt.subItemSpacing;
-        const respBullets = e.responsibilities.split(/\.\s*/).filter(s => s.trim().length > 0);
+        if (e.techStack && e.techStack.length > 0) {
+          setFont(10, "italic", [0, 0, 0]);
+          doc.text(`Technologies: ${e.techStack.join(", ")}`, mL, y);
+          y += fmt.subItemSpacing;
+        }
+        const respBullets = e.responsibilityBullets && e.responsibilityBullets.length > 0
+          ? e.responsibilityBullets.filter(s => s.trim().length > 0)
+          : e.responsibilities.split(/\.\s*/).filter(s => s.trim().length > 0);
         respBullets.forEach((bullet) => {
           addBulletPoint(bullet.trim().replace(/\.$/, ""));
         });
