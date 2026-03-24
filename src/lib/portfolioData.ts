@@ -15,6 +15,8 @@ export interface Internship {
   organization: string;
   duration: string;
   responsibilities: string;
+  responsibilityBullets?: string[];
+  techStack?: string[];
   startDate?: string;
   endDate?: string;
   singleDate?: string;
