@@ -98,13 +98,13 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
             const dates = [p.startDate && formatDate(p.startDate), p.endDate && formatDate(p.endDate)].filter(Boolean).join(" - ") || (p.singleDate ? formatDate(p.singleDate) : "");
             const bullets = p.description.split(/\.\s*/).filter(s => s.trim().length > 0);
             return (
-              <div key={p.id} style={{ marginBottom: idx < projects.length - 1 ? "6px" : 0 }}>
+              <div key={p.id} style={{ marginBottom: idx < projects.length - 1 ? `${fmt.itemSpacing ?? 3}px` : 0 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                   <strong style={{ fontSize: `${fmt.bodyFontSize + 0.5}px` }}>{p.title}</strong>
                   {dates && <span style={{ fontSize: `${fmt.bodyFontSize - 0.5}px`, color: "#555" }}>{dates}</span>}
                 </div>
                 {p.techStack.length > 0 && (
-                  <div style={{ fontSize: `${fmt.bodyFontSize - 0.5}px`, fontStyle: "italic", color: "#444", marginBottom: "2px" }}>
+                  <div style={{ fontSize: `${fmt.bodyFontSize - 0.5}px`, fontStyle: "italic", color: "#444", marginBottom: `${fmt.subItemSpacing ?? 2}px` }}>
                     Technologies: {p.techStack.join(", ")}
                   </div>
                 )}
@@ -124,12 +124,12 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
             const dates = [e.startDate && formatDate(e.startDate), e.endDate && formatDate(e.endDate)].filter(Boolean).join(" - ") || (e.singleDate ? formatDate(e.singleDate) : "") || e.duration;
             const bullets = e.responsibilities.split(/\.\s*/).filter(s => s.trim().length > 0);
             return (
-              <div key={e.id} style={{ marginBottom: idx < internships.length - 1 ? "6px" : 0 }}>
+              <div key={e.id} style={{ marginBottom: idx < internships.length - 1 ? `${fmt.itemSpacing ?? 3}px` : 0 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                   <strong style={{ fontSize: `${fmt.bodyFontSize + 0.5}px` }}>{e.role}</strong>
                   {dates && <span style={{ fontSize: `${fmt.bodyFontSize - 0.5}px`, color: "#555" }}>{dates}</span>}
                 </div>
-                <div style={{ fontSize: `${fmt.bodyFontSize}px`, fontStyle: "italic", color: "#444", marginBottom: "2px" }}>
+                <div style={{ fontSize: `${fmt.bodyFontSize}px`, fontStyle: "italic", color: "#444", marginBottom: `${fmt.subItemSpacing ?? 2}px` }}>
                   {e.organization}
                 </div>
                 {bullets.map((b, i) => <Bullet key={i} text={b.trim().replace(/\.$/, "")} />)}
@@ -156,12 +156,12 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
         <div key="education">
           <SectionHeading title="Education" />
           {data.education.map((edu, idx) => (
-            <div key={edu.id} style={{ marginBottom: idx < data.education.length - 1 ? "4px" : 0 }}>
+            <div key={edu.id} style={{ marginBottom: idx < data.education.length - 1 ? `${fmt.itemSpacing ?? 3}px` : 0 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                 <strong style={{ fontSize: `${fmt.bodyFontSize + 0.5}px` }}>{edu.course}</strong>
                 {edu.duration && <span style={{ fontSize: `${fmt.bodyFontSize - 0.5}px`, color: "#555" }}>{edu.duration}</span>}
               </div>
-              <div style={{ fontSize: `${fmt.bodyFontSize}px`, color: "#444" }}>{edu.institution}</div>
+              <div style={{ fontSize: `${fmt.bodyFontSize}px`, color: "#444", marginBottom: `${fmt.subItemSpacing ?? 2}px` }}>{edu.institution}</div>
               {edu.score && <div style={{ fontSize: `${fmt.bodyFontSize}px`, color: "#555" }}>{edu.score}</div>}
             </div>
           ))}

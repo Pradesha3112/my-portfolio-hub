@@ -541,9 +541,12 @@ export default function DashboardPage() {
                 <h3 className="font-semibold text-card-foreground text-sm">Spacing & Margins</h3>
                 {([
                   { key: "marginMM" as const, label: "Page Margins (mm)", min: 10, max: 35, step: 1 },
-                  { key: "sectionGapBefore" as const, label: "Gap Before Heading", min: 2, max: 15, step: 0.5 },
-                  { key: "sectionGapAfter" as const, label: "Gap After Heading", min: 2, max: 10, step: 0.5 },
-                  { key: "bulletSpacing" as const, label: "Bullet Spacing", min: 0.5, max: 5, step: 0.5 },
+                  { key: "sectionGapBefore" as const, label: "Gap Before Section Heading", min: 2, max: 15, step: 0.5 },
+                  { key: "sectionGapAfter" as const, label: "Gap After Section Heading", min: 2, max: 10, step: 0.5 },
+                  { key: "itemSpacing" as const, label: "Gap Between Entries (projects, edu…)", min: 0, max: 8, step: 0.5 },
+                  { key: "headerContentGap" as const, label: "Title → Content Gap", min: 2, max: 8, step: 0.5 },
+                  { key: "subItemSpacing" as const, label: "Sub-item Gap (tech stack, org…)", min: 1, max: 6, step: 0.5 },
+                  { key: "bulletSpacing" as const, label: "Bullet Point Spacing", min: 0, max: 5, step: 0.5 },
                   { key: "lineHeightMultiplier" as const, label: "Line Height", min: 1, max: 2, step: 0.1 },
                 ]).map(({ key, label, min, max, step }) => (
                   <div key={key} className="space-y-1">
