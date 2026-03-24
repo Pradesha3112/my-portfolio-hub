@@ -76,6 +76,9 @@ export interface ResumeFormatting {
   nameStyle: "normal" | "bold" | "italic";
   headingStyle: "normal" | "bold" | "italic";
   bodyStyle: "normal" | "bold" | "italic";
+  itemSpacing: number;        // gap between entries (projects, experiences, education)
+  headerContentGap: number;   // gap after entry title/role line
+  subItemSpacing: number;     // gap after tech stack, links, org name
 }
 
 export const DEFAULT_FORMATTING: ResumeFormatting = {
@@ -86,7 +89,7 @@ export const DEFAULT_FORMATTING: ResumeFormatting = {
   marginMM: 25.4,
   sectionGapBefore: 7,
   sectionGapAfter: 5,
-  bulletSpacing: 2,
+  bulletSpacing: 1.5,
   lineHeightMultiplier: 1.3,
   showSectionLines: true,
   hiddenSections: [],
@@ -94,6 +97,9 @@ export const DEFAULT_FORMATTING: ResumeFormatting = {
   nameStyle: "bold",
   headingStyle: "bold",
   bodyStyle: "normal",
+  itemSpacing: 3,
+  headerContentGap: 4.5,
+  subItemSpacing: 3.5,
 };
 
 export interface ResumeSelections {

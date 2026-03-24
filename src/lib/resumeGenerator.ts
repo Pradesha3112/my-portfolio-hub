@@ -133,7 +133,7 @@ export async function generateResume(portfolioUrl?: string) {
           setFont(fmt.bodyFontSize, "normal", [0, 0, 0]);
           const valLines = doc.splitTextToSize(skills.join(", "), cW - labelW);
           doc.text(valLines, mL + labelW, y);
-          y += valLines.length * lineHeight(fmt.bodyFontSize) + 2.5;
+          y += valLines.length * lineHeight(fmt.bodyFontSize) + fmt.bulletSpacing;
         }
       });
     },
@@ -149,11 +149,11 @@ export async function generateResume(portfolioUrl?: string) {
           setFont(10, "normal", [0, 0, 0]);
           doc.text(pDates, pageWidth - mR, y, { align: "right" });
         }
-        y += 5;
+        y += fmt.headerContentGap;
         if (p.techStack.length > 0) {
           setFont(10, "italic", [0, 0, 0]);
           doc.text(`Technologies: ${p.techStack.join(", ")}`, mL, y);
-          y += 4.5;
+          y += fmt.subItemSpacing;
         }
         const descBullets = p.description.split(/\.\s*/).filter(s => s.trim().length > 0);
         descBullets.forEach((bullet) => {
@@ -162,14 +162,14 @@ export async function generateResume(portfolioUrl?: string) {
         if (p.githubLink) {
           setFont(9, "normal", [0, 0, 0]);
           doc.text(`GitHub: ${p.githubLink}`, mL + 4, y);
-          y += 4;
+          y += fmt.subItemSpacing;
         }
         if (p.demoUrl || p.link) {
           setFont(9, "normal", [0, 0, 0]);
           doc.text(`Link: ${p.demoUrl || p.link}`, mL + 4, y);
-          y += 4;
+          y += fmt.subItemSpacing;
         }
-        if (idx < projects.length - 1) y += 3;
+        if (idx < projects.length - 1) y += fmt.itemSpacing;
       });
     },
     experience: () => {
@@ -184,15 +184,15 @@ export async function generateResume(portfolioUrl?: string) {
           setFont(10, "normal", [0, 0, 0]);
           doc.text(dates, pageWidth - mR, y, { align: "right" });
         }
-        y += 5;
+        y += fmt.headerContentGap;
         setFont(10.5, "italic", [0, 0, 0]);
         doc.text(e.organization, mL, y);
-        y += 4.5;
+        y += fmt.subItemSpacing;
         const respBullets = e.responsibilities.split(/\.\s*/).filter(s => s.trim().length > 0);
         respBullets.forEach((bullet) => {
           addBulletPoint(bullet.trim().replace(/\.$/, ""));
         });
-        if (idx < internships.length - 1) y += 3;
+        if (idx < internships.length - 1) y += fmt.itemSpacing;
       });
     },
     certifications: () => {
@@ -209,20 +209,20 @@ export async function generateResume(portfolioUrl?: string) {
         checkPage(12);
         setFont(11, "bold", [0, 0, 0]);
         doc.text(edu.course, mL, y);
-        y += 5;
+        y += fmt.headerContentGap;
         setFont(10.5, "normal", [0, 0, 0]);
         doc.text(edu.institution, mL, y);
         if (edu.duration) {
           setFont(10, "normal", [0, 0, 0]);
           doc.text(edu.duration, pageWidth - mR, y, { align: "right" });
         }
-        y += 4.5;
+        y += fmt.subItemSpacing;
         if (edu.score) {
           setFont(10, "normal", [0, 0, 0]);
           doc.text(edu.score, mL, y);
-          y += 4.5;
+          y += fmt.subItemSpacing;
         }
-        if (idx < d.education.length - 1) y += 2;
+        if (idx < d.education.length - 1) y += fmt.itemSpacing;
       });
     },
     achievements: () => {
