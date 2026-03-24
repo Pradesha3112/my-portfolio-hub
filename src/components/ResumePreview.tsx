@@ -122,7 +122,9 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
           <SectionHeading title="Work Experience" />
           {internships.map((e, idx) => {
             const dates = [e.startDate && formatDate(e.startDate), e.endDate && formatDate(e.endDate)].filter(Boolean).join(" - ") || (e.singleDate ? formatDate(e.singleDate) : "") || e.duration;
-            const bullets = e.responsibilities.split(/\.\s*/).filter(s => s.trim().length > 0);
+            const bullets = e.responsibilityBullets && e.responsibilityBullets.length > 0
+              ? e.responsibilityBullets.filter(s => s.trim().length > 0)
+              : e.responsibilities.split(/\.\s*/).filter(s => s.trim().length > 0);
             return (
               <div key={e.id} style={{ marginBottom: idx < internships.length - 1 ? `${fmt.itemSpacing ?? 3}px` : 0 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
@@ -132,6 +134,11 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
                 <div style={{ fontSize: `${fmt.bodyFontSize}px`, fontStyle: "italic", color: "#444", marginBottom: `${fmt.subItemSpacing ?? 2}px` }}>
                   {e.organization}
                 </div>
+                {e.techStack && e.techStack.length > 0 && (
+                  <div style={{ fontSize: `${fmt.bodyFontSize - 0.5}px`, fontStyle: "italic", color: "#444", marginBottom: `${fmt.subItemSpacing ?? 2}px` }}>
+                    Technologies: {e.techStack.join(", ")}
+                  </div>
+                )}
                 {bullets.map((b, i) => <Bullet key={i} text={b.trim().replace(/\.$/, "")} />)}
               </div>
             );
