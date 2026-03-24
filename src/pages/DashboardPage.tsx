@@ -762,13 +762,24 @@ function SectionEditor<T extends { id: string }>({
   );
 }
 
-// Internship editor with date pickers and thumbnail
+// Internship editor with 5 editing options
 function InternshipEditor({ items, onUpdate }: { items: Internship[]; onUpdate: (items: Internship[]) => void }) {
   const [deleteIdx, setDeleteIdx] = useState<number | null>(null);
   const handleChange = (index: number, key: string, value: unknown) => {
     const arr = [...items];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (arr[index] as any)[key] = value;
+    onUpdate(arr);
+  };
+
+  const getBullets = (item: Internship): string[] => {
+    if (item.responsibilityBullets && item.responsibilityBullets.length > 0) return item.responsibilityBullets;
+    return item.responsibilities ? item.responsibilities.split(/\.\s*/).filter(s => s.trim().length > 0) : [""];
+  };
+
+  const updateBullets = (index: number, bullets: string[]) => {
+    const arr = [...items];
+    arr[index] = { ...arr[index], responsibilityBullets: bullets, responsibilities: bullets.join(". ") };
     onUpdate(arr);
   };
 
@@ -784,29 +795,95 @@ function InternshipEditor({ items, onUpdate }: { items: Internship[]; onUpdate: 
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {items.map((item, i) => (
-        <div key={item.id} className="rounded-lg border border-border bg-card p-5 space-y-3">
-          <div><Label>Role</Label><Input value={item.role} onChange={(e) => handleChange(i, "role", e.target.value)} /></div>
-          <div><Label>Organization</Label><Input value={item.organization} onChange={(e) => handleChange(i, "organization", e.target.value)} /></div>
-          <div><Label>Duration (text)</Label><Input value={item.duration} onChange={(e) => handleChange(i, "duration", e.target.value)} /></div>
-          <div><Label>Responsibilities</Label><Textarea value={item.responsibilities} onChange={(e) => handleChange(i, "responsibilities", e.target.value)} rows={3} /></div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <DatePickerField label="Start Date" value={item.startDate} onChange={(v) => handleChange(i, "startDate", v)} />
-            <DatePickerField label="End Date" value={item.endDate} onChange={(v) => handleChange(i, "endDate", v)} />
-            <DatePickerField label="Single Date" value={item.singleDate} onChange={(v) => handleChange(i, "singleDate", v)} />
+      {items.map((item, i) => {
+        const bullets = getBullets(item);
+        return (
+          <div key={item.id} className="rounded-lg border border-border bg-card p-5 space-y-4">
+            {/* 1️⃣ Role / Job Title */}
+            <div className="space-y-1">
+              <Label className="text-sm font-semibold flex items-center gap-1">1️⃣ Role / Job Title</Label>
+              <Input value={item.role} onChange={(e) => handleChange(i, "role", e.target.value)} placeholder="e.g., Python Developer Intern" />
+            </div>
+
+            {/* 2️⃣ Company & Duration */}
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold flex items-center gap-1">2️⃣ Company & Duration</Label>
+              <Input value={item.organization} onChange={(e) => handleChange(i, "organization", e.target.value)} placeholder="Company name" />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <DatePickerField label="Start Date" value={item.startDate} onChange={(v) => handleChange(i, "startDate", v)} />
+                <DatePickerField label="End Date" value={item.endDate} onChange={(v) => handleChange(i, "endDate", v)} />
+                <div>
+                  <Label className="text-xs text-muted-foreground">Duration (text fallback)</Label>
+                  <Input value={item.duration} onChange={(e) => handleChange(i, "duration", e.target.value)} placeholder="e.g., 3 months" className="mt-1" />
+                </div>
+              </div>
+            </div>
+
+            {/* 3️⃣ Responsibilities (Individual Bullet Points) */}
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold flex items-center gap-1">3️⃣ Responsibilities (Bullet Points)</Label>
+              <p className="text-xs text-muted-foreground">Add, edit, reorder, or remove individual bullet points.</p>
+              {bullets.map((bullet, bi) => (
+                <div key={bi} className="flex items-start gap-2">
+                  <span className="text-muted-foreground mt-2.5 text-sm">•</span>
+                  <Textarea
+                    value={bullet}
+                    onChange={(e) => {
+                      const newBullets = [...bullets];
+                      newBullets[bi] = e.target.value;
+                      updateBullets(i, newBullets);
+                    }}
+                    rows={1}
+                    className="flex-1 min-h-[36px] resize-none"
+                    placeholder="Describe a responsibility or achievement..."
+                  />
+                  <div className="flex flex-col gap-0.5">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" disabled={bi === 0}
+                      onClick={() => { const b = [...bullets]; [b[bi - 1], b[bi]] = [b[bi], b[bi - 1]]; updateBullets(i, b); }}>
+                      <ArrowUp className="h-3 w-3" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" disabled={bi === bullets.length - 1}
+                      onClick={() => { const b = [...bullets]; [b[bi], b[bi + 1]] = [b[bi + 1], b[bi]]; updateBullets(i, b); }}>
+                      <ArrowDown className="h-3 w-3" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" disabled={bullets.length <= 1}
+                      onClick={() => { updateBullets(i, bullets.filter((_, j) => j !== bi)); }}>
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              <Button variant="outline" size="sm" onClick={() => updateBullets(i, [...bullets, ""])} className="gap-1">
+                <Plus className="h-3 w-3" /> Add Bullet Point
+              </Button>
+            </div>
+
+            {/* 4️⃣ Skills / Technologies Used */}
+            <div className="space-y-1">
+              <Label className="text-sm font-semibold flex items-center gap-1">4️⃣ Skills / Technologies Used</Label>
+              <Input
+                value={(item.techStack || []).join(", ")}
+                onChange={(e) => handleChange(i, "techStack", e.target.value.split(",").map(s => s.trim()).filter(Boolean))}
+                placeholder="e.g., Python, OpenCV, NumPy, Flask"
+              />
+              <p className="text-xs text-muted-foreground">Comma-separated. Shown in resume under each experience.</p>
+            </div>
+
+            {/* 5️⃣ Thumbnail */}
+            <div className="space-y-1">
+              <Label className="text-sm font-semibold flex items-center gap-1">5️⃣ Thumbnail / Image</Label>
+              <Input value={item.thumbnail || ""} onChange={(e) => handleChange(i, "thumbnail", e.target.value)} placeholder="https://image-url.png" />
+              {item.thumbnail && <img src={item.thumbnail} alt="thumb" className="mt-2 h-20 rounded-md border border-border object-cover" />}
+            </div>
+
+            <Button variant="ghost" size="sm" className="text-destructive gap-1" onClick={() => setDeleteIdx(i)}>
+              <Trash2 className="h-4 w-4" /> Remove Experience
+            </Button>
           </div>
-          <div>
-            <Label className="flex items-center gap-1"><Image className="h-3 w-3" /> Thumbnail URL</Label>
-            <Input value={item.thumbnail || ""} onChange={(e) => handleChange(i, "thumbnail", e.target.value)} placeholder="https://image-url.png" />
-            {item.thumbnail && <img src={item.thumbnail} alt="thumb" className="mt-2 h-20 rounded-md border border-border object-cover" />}
-          </div>
-          <Button variant="ghost" size="sm" className="text-destructive gap-1" onClick={() => setDeleteIdx(i)}>
-            <Trash2 className="h-4 w-4" /> Remove
-          </Button>
-        </div>
-      ))}
+        );
+      })}
       <Button variant="outline" onClick={() => {
-        onUpdate([...items, { id: generateId(), role: "", organization: "", duration: "", responsibilities: "" }]);
+        onUpdate([...items, { id: generateId(), role: "", organization: "", duration: "", responsibilities: "", responsibilityBullets: [""], techStack: [] }]);
         toast.success("Experience added");
       }} className="gap-1">
         <Plus className="h-4 w-4" /> Add Experience
