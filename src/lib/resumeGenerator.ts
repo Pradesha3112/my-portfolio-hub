@@ -1,6 +1,19 @@
 import jsPDF from "jspdf";
 import { getPortfolioData, getResumeItems, DEFAULT_SECTION_ORDER, DEFAULT_FORMATTING, type ResumeSectionId, type ResumeFormatting } from "./portfolioData";
 
+function addLinkedText(doc: jsPDF, label: string, url: string, x: number, y: number, fontSize: number) {
+  doc.setFontSize(fontSize);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(0, 80, 180);
+  const w = doc.getTextWidth(label);
+  doc.textWithLink(label, x, y, { url });
+  doc.setDrawColor(0, 80, 180);
+  doc.setLineWidth(0.2);
+  doc.line(x, y + 0.5, x + w, y + 0.5);
+  doc.setTextColor(0, 0, 0);
+  return w;
+}
+
 export async function generateResume(portfolioUrl?: string) {
   const d = getPortfolioData();
   const fmt: ResumeFormatting = { ...DEFAULT_FORMATTING, ...d.resumeFormatting };
@@ -86,18 +99,37 @@ export async function generateResume(portfolioUrl?: string) {
   doc.text(d.role, pageWidth / 2, y, { align: "center" });
   y += 5;
 
-  const contactParts: string[] = [];
-  if (d.email) contactParts.push(d.email);
-  if (d.linkedin) contactParts.push(d.linkedin);
-  if (d.github) contactParts.push(d.github);
-  if (contactParts.length > 0) {
-    setFont(fmt.contactFontSize, "normal", [0, 0, 0]);
-    const contactLine = contactParts.join("  |  ");
-    const contactLines = doc.splitTextToSize(contactLine, cW);
-    contactLines.forEach((line: string) => {
-      doc.text(line, pageWidth / 2, y, { align: "center" });
+  // Contact line with labeled hyperlinks
+  {
+    const items: { label: string; url?: string }[] = [];
+    if (d.email) items.push({ label: d.email, url: `mailto:${d.email}` });
+    if (d.linkedin) items.push({ label: "LinkedIn", url: d.linkedin });
+    if (d.github) items.push({ label: "GitHub", url: d.github });
+
+    if (items.length > 0) {
+      const sep = "  |  ";
+      setFont(fmt.contactFontSize, "normal", [0, 0, 0]);
+      const totalW = items.reduce((sum, it, i) => {
+        return sum + doc.getTextWidth(it.label) + (i < items.length - 1 ? doc.getTextWidth(sep) : 0);
+      }, 0);
+      let cx = (pageWidth - totalW) / 2;
+      items.forEach((it, i) => {
+        if (it.url) {
+          const w = addLinkedText(doc, it.label, it.url, cx, y, fmt.contactFontSize);
+          cx += w;
+        } else {
+          setFont(fmt.contactFontSize, "normal", [0, 0, 0]);
+          doc.text(it.label, cx, y);
+          cx += doc.getTextWidth(it.label);
+        }
+        if (i < items.length - 1) {
+          setFont(fmt.contactFontSize, "normal", [100, 100, 100]);
+          doc.text(sep, cx, y);
+          cx += doc.getTextWidth(sep);
+        }
+      });
       y += 4;
-    });
+    }
   }
   y += 2;
 
@@ -159,15 +191,26 @@ export async function generateResume(portfolioUrl?: string) {
         descBullets.forEach((bullet) => {
           addBulletPoint(bullet.trim().replace(/\.$/, ""));
         });
-        if (p.githubLink) {
-          setFont(9, "normal", [0, 0, 0]);
-          doc.text(`GitHub: ${p.githubLink}`, mL + 4, y);
-          y += fmt.subItemSpacing;
-        }
-        if (p.demoUrl || p.link) {
-          setFont(9, "normal", [0, 0, 0]);
-          doc.text(`Link: ${p.demoUrl || p.link}`, mL + 4, y);
-          y += fmt.subItemSpacing;
+        // Labeled project links on one line
+        {
+          const linkItems: { label: string; url: string }[] = [];
+          if (p.githubLink) linkItems.push({ label: "GitHub", url: p.githubLink });
+          if (p.demoUrl) linkItems.push({ label: "Live_Demo", url: p.demoUrl });
+          if (p.link && p.link !== p.demoUrl) linkItems.push({ label: "Project_Link", url: p.link });
+          if (linkItems.length > 0) {
+            const sep = "  |  ";
+            let lx = mL + 4;
+            linkItems.forEach((li, i) => {
+              const w = addLinkedText(doc, li.label, li.url, lx, y, 9);
+              lx += w;
+              if (i < linkItems.length - 1) {
+                setFont(9, "normal", [100, 100, 100]);
+                doc.text(sep, lx, y);
+                lx += doc.getTextWidth(sep);
+              }
+            });
+            y += fmt.subItemSpacing;
+          }
         }
         if (idx < projects.length - 1) y += fmt.itemSpacing;
       });
@@ -385,9 +428,9 @@ export async function generateProjectPDF(projectId: string) {
   // === Links ===
   checkPage(25);
   addSection("Links");
-  if (p.demoUrl) { addText(`Demo / Try Out: ${p.demoUrl}`, 9, [0, 80, 180]); }
-  if (p.link) { addText(`Project Link: ${p.link}`, 9, [0, 80, 180]); }
   if (p.githubLink) { addText(`GitHub: ${p.githubLink}`, 9, [0, 80, 180]); }
+  if (p.demoUrl) { addText(`Live_Demo: ${p.demoUrl}`, 9, [0, 80, 180]); }
+  if (p.link) { addText(`Project_Link: ${p.link}`, 9, [0, 80, 180]); }
 
   // === Screenshots ===
   const screenshots = [...(p.screenshots || []), ...(p.images || [])];

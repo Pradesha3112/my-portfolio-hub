@@ -1,6 +1,13 @@
 import { useMemo } from "react";
 import { type PortfolioData, type ResumeFormatting, type ResumeSectionId, DEFAULT_FORMATTING, DEFAULT_SECTION_ORDER, getResumeItems } from "@/lib/portfolioData";
 
+const LinkLabel = ({ label, url }: { label: string; url: string }) => (
+  <a href={url} target="_blank" rel="noopener noreferrer"
+    style={{ color: "#0050B4", textDecoration: "underline", textUnderlineOffset: "2px" }}>
+    {label}
+  </a>
+);
+
 interface ResumePreviewProps {
   data: PortfolioData;
 }
@@ -109,6 +116,23 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
                   </div>
                 )}
                 {bullets.map((b, i) => <Bullet key={i} text={b.trim().replace(/\.$/, "")} />)}
+                {(() => {
+                  const linkItems: { label: string; url: string }[] = [];
+                  if (p.githubLink) linkItems.push({ label: "GitHub", url: p.githubLink });
+                  if (p.demoUrl) linkItems.push({ label: "Live_Demo", url: p.demoUrl });
+                  if (p.link && p.link !== p.demoUrl) linkItems.push({ label: "Project_Link", url: p.link });
+                  if (!linkItems.length) return null;
+                  return (
+                    <div style={{ fontSize: `${fmt.bodyFontSize - 1}px`, marginTop: "2px" }}>
+                      {linkItems.map((li, i) => (
+                        <span key={li.label}>
+                          {i > 0 && <span style={{ color: "#888" }}>{"  |  "}</span>}
+                          <LinkLabel label={li.label} url={li.url} />
+                        </span>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
             );
           })}
@@ -219,7 +243,15 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
           {data.role}
         </div>
         <div style={{ fontSize: `${fmt.contactFontSize}px`, color: "#555" }}>
-          {[data.email, data.linkedin, data.github].filter(Boolean).join("  |  ")}
+          {[
+            data.email && <a key="email" href={`mailto:${data.email}`} style={{ color: "#0050B4", textDecoration: "none" }}>{data.email}</a>,
+            data.linkedin && <LinkLabel key="li" label="LinkedIn" url={data.linkedin} />,
+            data.github && <LinkLabel key="gh" label="GitHub" url={data.github} />,
+          ].filter(Boolean).reduce<React.ReactNode[]>((acc, el, i) => {
+            if (i > 0) acc.push(<span key={`sep-${i}`}>{"  |  "}</span>);
+            acc.push(el);
+            return acc;
+          }, [])}
         </div>
       </div>
 
