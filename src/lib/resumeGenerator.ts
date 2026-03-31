@@ -1,18 +1,26 @@
 import jsPDF from "jspdf";
 import { getPortfolioData, getResumeItems, DEFAULT_SECTION_ORDER, DEFAULT_FORMATTING, type ResumeSectionId, type ResumeFormatting } from "./portfolioData";
 
-function addLinkedText(doc: jsPDF, label: string, url: string, x: number, y: number, fontSize: number) {
+function addLinkedText(doc: jsPDF, label: string, url: string, x: number, y: number, fontSize: number, linkRgb: [number, number, number] = [0, 80, 180]) {
   doc.setFontSize(fontSize);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(0, 80, 180);
+  doc.setTextColor(...linkRgb);
   const w = doc.getTextWidth(label);
   doc.textWithLink(label, x, y, { url });
-  doc.setDrawColor(0, 80, 180);
+  doc.setDrawColor(...linkRgb);
   doc.setLineWidth(0.2);
   doc.line(x, y + 0.5, x + w, y + 0.5);
   doc.setTextColor(0, 0, 0);
   return w;
 }
+
+const FONT_MAP: Record<string, string> = {
+  Helvetica: "helvetica",
+  Times: "times",
+  Courier: "courier",
+  Georgia: "times",     // closest jsPDF built-in
+  Garamond: "times",    // closest jsPDF built-in
+};
 
 export async function generateResume(portfolioUrl?: string) {
   const d = getPortfolioData();
@@ -26,6 +34,8 @@ export async function generateResume(portfolioUrl?: string) {
   const cW = pageWidth - mL - mR;
   let y = 22;
 
+  const pdfFont = FONT_MAP[fmt.fontFamily] || "helvetica";
+
   const hexToRgb = (hex: string): [number, number, number] => {
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
@@ -34,10 +44,14 @@ export async function generateResume(portfolioUrl?: string) {
   };
 
   const headingRgb = hexToRgb(fmt.headingColor || "#000000");
+  const nameRgb = hexToRgb(fmt.nameColor || "#000000");
+  const bodyRgb = hexToRgb(fmt.bodyColor || "#000000");
+  const linkRgb = hexToRgb(fmt.linkColor || "#0050B4");
+  const accentRgb = hexToRgb(fmt.accentColor || "#555555");
 
-  const setFont = (size: number, style: "normal" | "bold" | "italic" = "normal", color: [number, number, number] = [0, 0, 0]) => {
+  const setFont = (size: number, style: "normal" | "bold" | "italic" = "normal", color: [number, number, number] = bodyRgb) => {
     doc.setFontSize(size);
-    doc.setFont("helvetica", style);
+    doc.setFont(pdfFont, style);
     doc.setTextColor(...color);
   };
 
@@ -66,14 +80,14 @@ export async function generateResume(portfolioUrl?: string) {
 
   const addBulletPoint = (text: string, indent = mL + 4) => {
     checkPage(8);
-    setFont(fmt.bodyFontSize, "normal", [0, 0, 0]);
+    setFont(fmt.bodyFontSize, "normal", bodyRgb);
     const bulletText = `\u2022  ${text}`;
     const lines = doc.splitTextToSize(bulletText, cW - (indent - mL));
     doc.text(lines, indent, y);
     y += lines.length * lineHeight(fmt.bodyFontSize) + fmt.bulletSpacing;
   };
 
-  const addText = (text: string, size?: number, style: "normal" | "bold" | "italic" = "normal", color: [number, number, number] = [0, 0, 0]) => {
+  const addText = (text: string, size?: number, style: "normal" | "bold" | "italic" = "normal", color: [number, number, number] = bodyRgb) => {
     const sz = size ?? fmt.bodyFontSize;
     checkPage(8);
     setFont(sz, style, color);
