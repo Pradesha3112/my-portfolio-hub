@@ -105,11 +105,11 @@ export async function generateResume(portfolioUrl?: string) {
   // ═══════════════════════════════════════
   // HEADER
   // ═══════════════════════════════════════
-  setFont(fmt.nameFontSize, fmt.nameStyle || "bold");
+  setFont(fmt.nameFontSize, fmt.nameStyle || "bold", nameRgb);
   doc.text(d.name.toUpperCase(), pageWidth / 2, y, { align: "center" });
   y += 6;
 
-  setFont(fmt.bodyFontSize, "normal", [0, 0, 0]);
+  setFont(fmt.bodyFontSize, "normal", bodyRgb);
   doc.text(d.role, pageWidth / 2, y, { align: "center" });
   y += 5;
 
@@ -122,22 +122,22 @@ export async function generateResume(portfolioUrl?: string) {
 
     if (items.length > 0) {
       const sep = "  |  ";
-      setFont(fmt.contactFontSize, "normal", [0, 0, 0]);
+      setFont(fmt.contactFontSize, "normal", accentRgb);
       const totalW = items.reduce((sum, it, i) => {
         return sum + doc.getTextWidth(it.label) + (i < items.length - 1 ? doc.getTextWidth(sep) : 0);
       }, 0);
       let cx = (pageWidth - totalW) / 2;
       items.forEach((it, i) => {
         if (it.url) {
-          const w = addLinkedText(doc, it.label, it.url, cx, y, fmt.contactFontSize);
+          const w = addLinkedText(doc, it.label, it.url, cx, y, fmt.contactFontSize, linkRgb);
           cx += w;
         } else {
-          setFont(fmt.contactFontSize, "normal", [0, 0, 0]);
+          setFont(fmt.contactFontSize, "normal", accentRgb);
           doc.text(it.label, cx, y);
           cx += doc.getTextWidth(it.label);
         }
         if (i < items.length - 1) {
-          setFont(fmt.contactFontSize, "normal", [100, 100, 100]);
+          setFont(fmt.contactFontSize, "normal", accentRgb);
           doc.text(sep, cx, y);
           cx += doc.getTextWidth(sep);
         }
