@@ -244,7 +244,7 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
         </div>
         <div style={{ fontSize: `${fmt.contactFontSize}px`, color: "#555" }}>
           {[
-            data.email && <a key="email" href={`mailto:${data.email}`} style={{ color: "#0050B4", textDecoration: "none" }}>{data.email}</a>,
+            data.email && <LinkLabel key="email" label="Email" url={`mailto:${data.email}`} />,
             data.linkedin && <LinkLabel key="li" label="LinkedIn" url={data.linkedin} />,
             data.github && <LinkLabel key="gh" label="GitHub" url={data.github} />,
           ].filter(Boolean).reduce<React.ReactNode[]>((acc, el, i) => {
