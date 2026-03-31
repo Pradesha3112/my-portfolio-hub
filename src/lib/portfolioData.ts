@@ -62,6 +62,8 @@ export const DEFAULT_SECTION_ORDER: ResumeSectionId[] = [
   "summary", "skills", "projects", "experience", "certifications", "education", "achievements"
 ];
 
+export type ResumeFontFamily = "Helvetica" | "Times" | "Courier" | "Georgia" | "Garamond";
+
 export interface ResumeFormatting {
   nameFontSize: number;
   headingFontSize: number;
@@ -75,12 +77,17 @@ export interface ResumeFormatting {
   showSectionLines: boolean;
   hiddenSections: ResumeSectionId[];
   headingColor: string;
+  nameColor: string;
+  bodyColor: string;
+  linkColor: string;
+  accentColor: string;       // dates, secondary text
+  fontFamily: ResumeFontFamily;
   nameStyle: "normal" | "bold" | "italic";
   headingStyle: "normal" | "bold" | "italic";
   bodyStyle: "normal" | "bold" | "italic";
-  itemSpacing: number;        // gap between entries (projects, experiences, education)
-  headerContentGap: number;   // gap after entry title/role line
-  subItemSpacing: number;     // gap after tech stack, links, org name
+  itemSpacing: number;
+  headerContentGap: number;
+  subItemSpacing: number;
 }
 
 export const DEFAULT_FORMATTING: ResumeFormatting = {
@@ -96,6 +103,11 @@ export const DEFAULT_FORMATTING: ResumeFormatting = {
   showSectionLines: true,
   hiddenSections: [],
   headingColor: "#000000",
+  nameColor: "#000000",
+  bodyColor: "#000000",
+  linkColor: "#0050B4",
+  accentColor: "#555555",
+  fontFamily: "Helvetica",
   nameStyle: "bold",
   headingStyle: "bold",
   bodyStyle: "normal",

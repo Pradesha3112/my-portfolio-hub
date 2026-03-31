@@ -1,18 +1,26 @@
 import jsPDF from "jspdf";
 import { getPortfolioData, getResumeItems, DEFAULT_SECTION_ORDER, DEFAULT_FORMATTING, type ResumeSectionId, type ResumeFormatting } from "./portfolioData";
 
-function addLinkedText(doc: jsPDF, label: string, url: string, x: number, y: number, fontSize: number) {
+function addLinkedText(doc: jsPDF, label: string, url: string, x: number, y: number, fontSize: number, linkRgb: [number, number, number] = [0, 80, 180]) {
   doc.setFontSize(fontSize);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(0, 80, 180);
+  doc.setTextColor(...linkRgb);
   const w = doc.getTextWidth(label);
   doc.textWithLink(label, x, y, { url });
-  doc.setDrawColor(0, 80, 180);
+  doc.setDrawColor(...linkRgb);
   doc.setLineWidth(0.2);
   doc.line(x, y + 0.5, x + w, y + 0.5);
   doc.setTextColor(0, 0, 0);
   return w;
 }
+
+const FONT_MAP: Record<string, string> = {
+  Helvetica: "helvetica",
+  Times: "times",
+  Courier: "courier",
+  Georgia: "times",     // closest jsPDF built-in
+  Garamond: "times",    // closest jsPDF built-in
+};
 
 export async function generateResume(portfolioUrl?: string) {
   const d = getPortfolioData();
@@ -26,6 +34,8 @@ export async function generateResume(portfolioUrl?: string) {
   const cW = pageWidth - mL - mR;
   let y = 22;
 
+  const pdfFont = FONT_MAP[fmt.fontFamily] || "helvetica";
+
   const hexToRgb = (hex: string): [number, number, number] => {
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
@@ -34,10 +44,14 @@ export async function generateResume(portfolioUrl?: string) {
   };
 
   const headingRgb = hexToRgb(fmt.headingColor || "#000000");
+  const nameRgb = hexToRgb(fmt.nameColor || "#000000");
+  const bodyRgb = hexToRgb(fmt.bodyColor || "#000000");
+  const linkRgb = hexToRgb(fmt.linkColor || "#0050B4");
+  const accentRgb = hexToRgb(fmt.accentColor || "#555555");
 
-  const setFont = (size: number, style: "normal" | "bold" | "italic" = "normal", color: [number, number, number] = [0, 0, 0]) => {
+  const setFont = (size: number, style: "normal" | "bold" | "italic" = "normal", color: [number, number, number] = bodyRgb) => {
     doc.setFontSize(size);
-    doc.setFont("helvetica", style);
+    doc.setFont(pdfFont, style);
     doc.setTextColor(...color);
   };
 
@@ -66,14 +80,14 @@ export async function generateResume(portfolioUrl?: string) {
 
   const addBulletPoint = (text: string, indent = mL + 4) => {
     checkPage(8);
-    setFont(fmt.bodyFontSize, "normal", [0, 0, 0]);
+    setFont(fmt.bodyFontSize, "normal", bodyRgb);
     const bulletText = `\u2022  ${text}`;
     const lines = doc.splitTextToSize(bulletText, cW - (indent - mL));
     doc.text(lines, indent, y);
     y += lines.length * lineHeight(fmt.bodyFontSize) + fmt.bulletSpacing;
   };
 
-  const addText = (text: string, size?: number, style: "normal" | "bold" | "italic" = "normal", color: [number, number, number] = [0, 0, 0]) => {
+  const addText = (text: string, size?: number, style: "normal" | "bold" | "italic" = "normal", color: [number, number, number] = bodyRgb) => {
     const sz = size ?? fmt.bodyFontSize;
     checkPage(8);
     setFont(sz, style, color);
@@ -91,11 +105,11 @@ export async function generateResume(portfolioUrl?: string) {
   // ═══════════════════════════════════════
   // HEADER
   // ═══════════════════════════════════════
-  setFont(fmt.nameFontSize, fmt.nameStyle || "bold");
+  setFont(fmt.nameFontSize, fmt.nameStyle || "bold", nameRgb);
   doc.text(d.name.toUpperCase(), pageWidth / 2, y, { align: "center" });
   y += 6;
 
-  setFont(fmt.bodyFontSize, "normal", [0, 0, 0]);
+  setFont(fmt.bodyFontSize, "normal", bodyRgb);
   doc.text(d.role, pageWidth / 2, y, { align: "center" });
   y += 5;
 
@@ -108,22 +122,22 @@ export async function generateResume(portfolioUrl?: string) {
 
     if (items.length > 0) {
       const sep = "  |  ";
-      setFont(fmt.contactFontSize, "normal", [0, 0, 0]);
+      setFont(fmt.contactFontSize, "normal", accentRgb);
       const totalW = items.reduce((sum, it, i) => {
         return sum + doc.getTextWidth(it.label) + (i < items.length - 1 ? doc.getTextWidth(sep) : 0);
       }, 0);
       let cx = (pageWidth - totalW) / 2;
       items.forEach((it, i) => {
         if (it.url) {
-          const w = addLinkedText(doc, it.label, it.url, cx, y, fmt.contactFontSize);
+          const w = addLinkedText(doc, it.label, it.url, cx, y, fmt.contactFontSize, linkRgb);
           cx += w;
         } else {
-          setFont(fmt.contactFontSize, "normal", [0, 0, 0]);
+          setFont(fmt.contactFontSize, "normal", accentRgb);
           doc.text(it.label, cx, y);
           cx += doc.getTextWidth(it.label);
         }
         if (i < items.length - 1) {
-          setFont(fmt.contactFontSize, "normal", [100, 100, 100]);
+          setFont(fmt.contactFontSize, "normal", accentRgb);
           doc.text(sep, cx, y);
           cx += doc.getTextWidth(sep);
         }
@@ -158,11 +172,11 @@ export async function generateResume(portfolioUrl?: string) {
         const skills = d.skills[cat];
         if (skills && skills.length > 0) {
           checkPage(8);
-          setFont(fmt.bodyFontSize, "bold", [0, 0, 0]);
+          setFont(fmt.bodyFontSize, "bold", bodyRgb);
           const label = `${catLabels[cat] || cat}: `;
           const labelW = doc.getTextWidth(label);
           doc.text(label, mL, y);
-          setFont(fmt.bodyFontSize, "normal", [0, 0, 0]);
+          setFont(fmt.bodyFontSize, "normal", bodyRgb);
           const valLines = doc.splitTextToSize(skills.join(", "), cW - labelW);
           doc.text(valLines, mL + labelW, y);
           y += valLines.length * lineHeight(fmt.bodyFontSize) + fmt.bulletSpacing;
@@ -174,16 +188,16 @@ export async function generateResume(portfolioUrl?: string) {
       addSectionHeading("Projects");
       projects.forEach((p, idx) => {
         checkPage(14);
-        setFont(11, "bold", [0, 0, 0]);
+        setFont(11, "bold", bodyRgb);
         doc.text(p.title, mL, y);
         const pDates = [p.startDate && formatDate(p.startDate), p.endDate && formatDate(p.endDate)].filter(Boolean).join(" - ") || (p.singleDate ? formatDate(p.singleDate) : "");
         if (pDates) {
-          setFont(10, "normal", [0, 0, 0]);
+          setFont(10, "normal", accentRgb);
           doc.text(pDates, pageWidth - mR, y, { align: "right" });
         }
         y += fmt.headerContentGap;
         if (p.techStack.length > 0) {
-          setFont(10, "italic", [0, 0, 0]);
+          setFont(10, "italic", accentRgb);
           doc.text(`Technologies: ${p.techStack.join(", ")}`, mL, y);
           y += fmt.subItemSpacing;
         }
@@ -191,7 +205,6 @@ export async function generateResume(portfolioUrl?: string) {
         descBullets.forEach((bullet) => {
           addBulletPoint(bullet.trim().replace(/\.$/, ""));
         });
-        // Labeled project links on one line
         {
           const linkItems: { label: string; url: string }[] = [];
           if (p.githubLink) linkItems.push({ label: "GitHub", url: p.githubLink });
@@ -201,10 +214,10 @@ export async function generateResume(portfolioUrl?: string) {
             const sep = "  |  ";
             let lx = mL + 4;
             linkItems.forEach((li, i) => {
-              const w = addLinkedText(doc, li.label, li.url, lx, y, 9);
+              const w = addLinkedText(doc, li.label, li.url, lx, y, 9, linkRgb);
               lx += w;
               if (i < linkItems.length - 1) {
-                setFont(9, "normal", [100, 100, 100]);
+                setFont(9, "normal", accentRgb);
                 doc.text(sep, lx, y);
                 lx += doc.getTextWidth(sep);
               }
@@ -220,19 +233,19 @@ export async function generateResume(portfolioUrl?: string) {
       addSectionHeading("Work Experience");
       internships.forEach((e, idx) => {
         checkPage(14);
-        setFont(11, "bold", [0, 0, 0]);
+        setFont(11, "bold", bodyRgb);
         doc.text(e.role, mL, y);
         const dates = [e.startDate && formatDate(e.startDate), e.endDate && formatDate(e.endDate)].filter(Boolean).join(" - ") || (e.singleDate ? formatDate(e.singleDate) : "") || e.duration;
         if (dates) {
-          setFont(10, "normal", [0, 0, 0]);
+          setFont(10, "normal", accentRgb);
           doc.text(dates, pageWidth - mR, y, { align: "right" });
         }
         y += fmt.headerContentGap;
-        setFont(10.5, "italic", [0, 0, 0]);
+        setFont(10.5, "italic", accentRgb);
         doc.text(e.organization, mL, y);
         y += fmt.subItemSpacing;
         if (e.techStack && e.techStack.length > 0) {
-          setFont(10, "italic", [0, 0, 0]);
+          setFont(10, "italic", accentRgb);
           doc.text(`Technologies: ${e.techStack.join(", ")}`, mL, y);
           y += fmt.subItemSpacing;
         }
@@ -257,18 +270,18 @@ export async function generateResume(portfolioUrl?: string) {
       addSectionHeading("Education");
       d.education.forEach((edu, idx) => {
         checkPage(12);
-        setFont(11, "bold", [0, 0, 0]);
+        setFont(11, "bold", bodyRgb);
         doc.text(edu.course, mL, y);
         y += fmt.headerContentGap;
-        setFont(10.5, "normal", [0, 0, 0]);
+        setFont(10.5, "normal", bodyRgb);
         doc.text(edu.institution, mL, y);
         if (edu.duration) {
-          setFont(10, "normal", [0, 0, 0]);
+          setFont(10, "normal", accentRgb);
           doc.text(edu.duration, pageWidth - mR, y, { align: "right" });
         }
         y += fmt.subItemSpacing;
         if (edu.score) {
-          setFont(10, "normal", [0, 0, 0]);
+          setFont(10, "normal", accentRgb);
           doc.text(edu.score, mL, y);
           y += fmt.subItemSpacing;
         }
