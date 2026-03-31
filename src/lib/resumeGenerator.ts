@@ -102,7 +102,7 @@ export async function generateResume(portfolioUrl?: string) {
   // Contact line with labeled hyperlinks
   {
     const items: { label: string; url?: string }[] = [];
-    if (d.email) items.push({ label: d.email, url: `mailto:${d.email}` });
+    if (d.email) items.push({ label: "Email", url: `mailto:${d.email}` });
     if (d.linkedin) items.push({ label: "LinkedIn", url: d.linkedin });
     if (d.github) items.push({ label: "GitHub", url: d.github });
 
