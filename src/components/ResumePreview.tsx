@@ -1,12 +1,13 @@
 import { useMemo } from "react";
 import { type PortfolioData, type ResumeFormatting, type ResumeSectionId, DEFAULT_FORMATTING, DEFAULT_SECTION_ORDER, getResumeItems } from "@/lib/portfolioData";
 
-const LinkLabel = ({ label, url }: { label: string; url: string }) => (
-  <a href={url} target="_blank" rel="noopener noreferrer"
-    style={{ color: "#0050B4", textDecoration: "underline", textUnderlineOffset: "2px" }}>
-    {label}
-  </a>
-);
+const FONT_CSS_MAP: Record<string, string> = {
+  Helvetica: "Helvetica, Arial, sans-serif",
+  Times: "'Times New Roman', Times, serif",
+  Courier: "'Courier New', Courier, monospace",
+  Georgia: "Georgia, 'Times New Roman', serif",
+  Garamond: "Garamond, 'Times New Roman', serif",
+};
 
 interface ResumePreviewProps {
   data: PortfolioData;
@@ -17,6 +18,15 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
   const { projects, internships, certifications, skillCategories } = useMemo(() => getResumeItems(data), [data]);
   const sectionOrder: ResumeSectionId[] = data.resumeSelections?.sectionOrder || DEFAULT_SECTION_ORDER;
 
+  const fontFamily = FONT_CSS_MAP[fmt.fontFamily] || FONT_CSS_MAP.Helvetica;
+
+  const LinkLabel = ({ label, url }: { label: string; url: string }) => (
+    <a href={url} target="_blank" rel="noopener noreferrer"
+      style={{ color: fmt.linkColor, textDecoration: "underline", textUnderlineOffset: "2px" }}>
+      {label}
+    </a>
+  );
+
   const catLabels: Record<string, string> = {
     languages: "Programming Languages",
     tools: "Tools & Technologies",
@@ -24,7 +34,7 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
     other: "Professional Skills",
   };
 
-  const px = (mm: number) => `${mm * 3.78}px`; // mm to px approx
+  const px = (mm: number) => `${mm * 3.78}px`;
   const fontStyle = (style: string) => ({
     fontWeight: style === "bold" ? 700 : 400,
     fontStyle: style === "italic" ? "italic" as const : "normal" as const,
@@ -61,6 +71,7 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
       marginBottom: `${fmt.bulletSpacing}px`,
       paddingLeft: "12px",
       textIndent: "-12px",
+      color: fmt.bodyColor,
       ...fontStyle(fmt.bodyStyle),
     }}>
       •&nbsp;&nbsp;{text}
@@ -73,7 +84,7 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
       return (
         <div key="summary">
           <SectionHeading title="Professional Summary" />
-          <p style={{ fontSize: `${fmt.bodyFontSize}px`, lineHeight: fmt.lineHeightMultiplier, margin: 0, ...fontStyle(fmt.bodyStyle) }}>
+          <p style={{ fontSize: `${fmt.bodyFontSize}px`, lineHeight: fmt.lineHeightMultiplier, margin: 0, color: fmt.bodyColor, ...fontStyle(fmt.bodyStyle) }}>
             {data.intro}
           </p>
         </div>
@@ -88,7 +99,7 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
             const skills = data.skills[cat];
             if (!skills?.length) return null;
             return (
-              <div key={cat} style={{ fontSize: `${fmt.bodyFontSize}px`, lineHeight: fmt.lineHeightMultiplier, marginBottom: "3px" }}>
+              <div key={cat} style={{ fontSize: `${fmt.bodyFontSize}px`, lineHeight: fmt.lineHeightMultiplier, marginBottom: "3px", color: fmt.bodyColor }}>
                 <strong>{catLabels[cat] || cat}:</strong> {skills.join(", ")}
               </div>
             );
@@ -107,11 +118,11 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
             return (
               <div key={p.id} style={{ marginBottom: idx < projects.length - 1 ? `${fmt.itemSpacing ?? 3}px` : 0 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                  <strong style={{ fontSize: `${fmt.bodyFontSize + 0.5}px` }}>{p.title}</strong>
-                  {dates && <span style={{ fontSize: `${fmt.bodyFontSize - 0.5}px`, color: "#555" }}>{dates}</span>}
+                  <strong style={{ fontSize: `${fmt.bodyFontSize + 0.5}px`, color: fmt.bodyColor }}>{p.title}</strong>
+                  {dates && <span style={{ fontSize: `${fmt.bodyFontSize - 0.5}px`, color: fmt.accentColor }}>{dates}</span>}
                 </div>
                 {p.techStack.length > 0 && (
-                  <div style={{ fontSize: `${fmt.bodyFontSize - 0.5}px`, fontStyle: "italic", color: "#444", marginBottom: `${fmt.subItemSpacing ?? 2}px` }}>
+                  <div style={{ fontSize: `${fmt.bodyFontSize - 0.5}px`, fontStyle: "italic", color: fmt.accentColor, marginBottom: `${fmt.subItemSpacing ?? 2}px` }}>
                     Technologies: {p.techStack.join(", ")}
                   </div>
                 )}
@@ -126,7 +137,7 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
                     <div style={{ fontSize: `${fmt.bodyFontSize - 1}px`, marginTop: "2px" }}>
                       {linkItems.map((li, i) => (
                         <span key={li.label}>
-                          {i > 0 && <span style={{ color: "#888" }}>{"  |  "}</span>}
+                          {i > 0 && <span style={{ color: fmt.accentColor }}>{"  |  "}</span>}
                           <LinkLabel label={li.label} url={li.url} />
                         </span>
                       ))}
@@ -152,14 +163,14 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
             return (
               <div key={e.id} style={{ marginBottom: idx < internships.length - 1 ? `${fmt.itemSpacing ?? 3}px` : 0 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                  <strong style={{ fontSize: `${fmt.bodyFontSize + 0.5}px` }}>{e.role}</strong>
-                  {dates && <span style={{ fontSize: `${fmt.bodyFontSize - 0.5}px`, color: "#555" }}>{dates}</span>}
+                  <strong style={{ fontSize: `${fmt.bodyFontSize + 0.5}px`, color: fmt.bodyColor }}>{e.role}</strong>
+                  {dates && <span style={{ fontSize: `${fmt.bodyFontSize - 0.5}px`, color: fmt.accentColor }}>{dates}</span>}
                 </div>
-                <div style={{ fontSize: `${fmt.bodyFontSize}px`, fontStyle: "italic", color: "#444", marginBottom: `${fmt.subItemSpacing ?? 2}px` }}>
+                <div style={{ fontSize: `${fmt.bodyFontSize}px`, fontStyle: "italic", color: fmt.accentColor, marginBottom: `${fmt.subItemSpacing ?? 2}px` }}>
                   {e.organization}
                 </div>
                 {e.techStack && e.techStack.length > 0 && (
-                  <div style={{ fontSize: `${fmt.bodyFontSize - 0.5}px`, fontStyle: "italic", color: "#444", marginBottom: `${fmt.subItemSpacing ?? 2}px` }}>
+                  <div style={{ fontSize: `${fmt.bodyFontSize - 0.5}px`, fontStyle: "italic", color: fmt.accentColor, marginBottom: `${fmt.subItemSpacing ?? 2}px` }}>
                     Technologies: {e.techStack.join(", ")}
                   </div>
                 )}
@@ -189,11 +200,11 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
           {data.education.map((edu, idx) => (
             <div key={edu.id} style={{ marginBottom: idx < data.education.length - 1 ? `${fmt.itemSpacing ?? 3}px` : 0 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                <strong style={{ fontSize: `${fmt.bodyFontSize + 0.5}px` }}>{edu.course}</strong>
-                {edu.duration && <span style={{ fontSize: `${fmt.bodyFontSize - 0.5}px`, color: "#555" }}>{edu.duration}</span>}
+                <strong style={{ fontSize: `${fmt.bodyFontSize + 0.5}px`, color: fmt.bodyColor }}>{edu.course}</strong>
+                {edu.duration && <span style={{ fontSize: `${fmt.bodyFontSize - 0.5}px`, color: fmt.accentColor }}>{edu.duration}</span>}
               </div>
-              <div style={{ fontSize: `${fmt.bodyFontSize}px`, color: "#444", marginBottom: `${fmt.subItemSpacing ?? 2}px` }}>{edu.institution}</div>
-              {edu.score && <div style={{ fontSize: `${fmt.bodyFontSize}px`, color: "#555" }}>{edu.score}</div>}
+              <div style={{ fontSize: `${fmt.bodyFontSize}px`, color: fmt.accentColor, marginBottom: `${fmt.subItemSpacing ?? 2}px` }}>{edu.institution}</div>
+              {edu.score && <div style={{ fontSize: `${fmt.bodyFontSize}px`, color: fmt.accentColor }}>{edu.score}</div>}
             </div>
           ))}
         </div>
@@ -214,17 +225,17 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
     <div
       style={{
         width: "100%",
-        maxWidth: "595px", // A4 width in px at 72dpi
+        maxWidth: "595px",
         margin: "0 auto",
         padding: px(fmt.marginMM),
         background: "white",
-        color: "#000",
-        fontFamily: "Helvetica, Arial, sans-serif",
+        color: fmt.bodyColor,
+        fontFamily,
         fontSize: `${fmt.bodyFontSize}px`,
         lineHeight: fmt.lineHeightMultiplier,
         boxShadow: "0 2px 20px rgba(0,0,0,0.15)",
         borderRadius: "4px",
-        minHeight: "842px", // A4 height approx
+        minHeight: "842px",
         position: "relative",
       }}
     >
@@ -235,14 +246,15 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
           margin: 0,
           letterSpacing: "1px",
           textTransform: "uppercase",
+          color: fmt.nameColor,
           ...fontStyle(fmt.nameStyle),
         }}>
           {data.name}
         </h1>
-        <div style={{ fontSize: `${fmt.bodyFontSize}px`, margin: "4px 0" }}>
+        <div style={{ fontSize: `${fmt.bodyFontSize}px`, margin: "4px 0", color: fmt.bodyColor }}>
           {data.role}
         </div>
-        <div style={{ fontSize: `${fmt.contactFontSize}px`, color: "#555" }}>
+        <div style={{ fontSize: `${fmt.contactFontSize}px`, color: fmt.accentColor }}>
           {[
             data.email && <LinkLabel key="email" label="Email" url={`mailto:${data.email}`} />,
             data.linkedin && <LinkLabel key="li" label="LinkedIn" url={data.linkedin} />,
