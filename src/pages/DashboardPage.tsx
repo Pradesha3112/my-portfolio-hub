@@ -503,37 +503,67 @@ export default function DashboardPage() {
                 ))}
               </div>
 
-              {/* Heading Color */}
+              {/* Font Family */}
               <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-                <h3 className="font-semibold text-card-foreground text-sm flex items-center gap-1"><Palette className="h-4 w-4" /> Heading Color</h3>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="color"
-                    value={data.resumeFormatting?.headingColor ?? DEFAULT_FORMATTING.headingColor}
-                    onChange={(e) => update((d) => ({
-                      ...d,
-                      resumeFormatting: { ...DEFAULT_FORMATTING, ...d.resumeFormatting, headingColor: e.target.value },
-                    }))}
-                    className="w-10 h-10 rounded border border-border cursor-pointer"
-                  />
-                  <span className="text-sm text-muted-foreground font-mono">
-                    {data.resumeFormatting?.headingColor ?? DEFAULT_FORMATTING.headingColor}
-                  </span>
-                  <div className="flex gap-1 ml-auto">
-                    {["#000000", "#1a365d", "#2d3748", "#1e40af", "#065f46", "#7c3aed"].map((c) => (
-                      <button
-                        key={c}
-                        onClick={() => update((d) => ({
-                          ...d,
-                          resumeFormatting: { ...DEFAULT_FORMATTING, ...d.resumeFormatting, headingColor: c },
-                        }))}
-                        className="w-6 h-6 rounded-full border border-border hover:scale-110 transition-transform"
-                        style={{ backgroundColor: c }}
-                        title={c}
-                      />
+                <h3 className="font-semibold text-card-foreground text-sm flex items-center gap-1"><Type className="h-4 w-4" /> Font Family</h3>
+                <Select
+                  value={data.resumeFormatting?.fontFamily ?? DEFAULT_FORMATTING.fontFamily}
+                  onValueChange={(v) => update((d) => ({
+                    ...d,
+                    resumeFormatting: { ...DEFAULT_FORMATTING, ...d.resumeFormatting, fontFamily: v as ResumeFontFamily },
+                  }))}
+                >
+                  <SelectTrigger className="w-full h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(["Helvetica", "Times", "Courier", "Georgia", "Garamond"] as ResumeFontFamily[]).map((f) => (
+                      <SelectItem key={f} value={f}>{f}</SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Resume Colors */}
+              <div className="rounded-lg border border-border bg-card p-4 space-y-4">
+                <h3 className="font-semibold text-card-foreground text-sm flex items-center gap-1"><Palette className="h-4 w-4" /> Resume Colors</h3>
+                {([
+                  { key: "nameColor" as const, label: "Name", presets: ["#000000", "#1a365d", "#1e40af", "#7c3aed", "#065f46", "#991b1b"] },
+                  { key: "headingColor" as const, label: "Section Headings", presets: ["#000000", "#1a365d", "#2d3748", "#1e40af", "#065f46", "#7c3aed"] },
+                  { key: "bodyColor" as const, label: "Body Text", presets: ["#000000", "#1a1a1a", "#333333", "#2d3748"] },
+                  { key: "accentColor" as const, label: "Dates & Secondary", presets: ["#555555", "#666666", "#444444", "#6b7280", "#4a5568"] },
+                  { key: "linkColor" as const, label: "Links", presets: ["#0050B4", "#1e40af", "#2563eb", "#7c3aed", "#059669", "#dc2626"] },
+                ]).map(({ key, label, presets }) => (
+                  <div key={key} className="space-y-1.5">
+                    <Label className="text-sm">{label}</Label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        value={data.resumeFormatting?.[key] ?? DEFAULT_FORMATTING[key]}
+                        onChange={(e) => update((d) => ({
+                          ...d,
+                          resumeFormatting: { ...DEFAULT_FORMATTING, ...d.resumeFormatting, [key]: e.target.value },
+                        }))}
+                        className="w-8 h-8 rounded border border-border cursor-pointer"
+                      />
+                      <span className="text-xs text-muted-foreground font-mono w-16">
+                        {data.resumeFormatting?.[key] ?? DEFAULT_FORMATTING[key]}
+                      </span>
+                      <div className="flex gap-1 ml-auto flex-wrap">
+                        {presets.map((c) => (
+                          <button
+                            key={c}
+                            onClick={() => update((d) => ({
+                              ...d,
+                              resumeFormatting: { ...DEFAULT_FORMATTING, ...d.resumeFormatting, [key]: c },
+                            }))}
+                            className="w-5 h-5 rounded-full border border-border hover:scale-110 transition-transform"
+                            style={{ backgroundColor: c }}
+                            title={c}
+                          />
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
 
               {/* Spacing */}
