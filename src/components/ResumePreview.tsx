@@ -53,14 +53,24 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
         fontSize: `${fmt.headingFontSize}px`,
         color: fmt.headingColor,
         textTransform: "uppercase",
-        letterSpacing: "0.5px",
+        letterSpacing: templateId === "modern" ? "1.5px" : templateId === "minimal" ? "2px" : "0.5px",
         margin: 0,
+        borderBottom: templateId === "modern" ? `2px solid ${fmt.headingColor}` : "none",
+        paddingBottom: templateId === "modern" ? "2px" : 0,
         ...fontStyle(fmt.headingStyle),
       }}>
         {title}
       </h2>
-      {fmt.showSectionLines && (
-        <div style={{ borderBottom: `1.5px solid ${fmt.headingColor}`, marginTop: "2px", opacity: 0.6 }} />
+      {fmt.showSectionLines && templateId !== "modern" && (
+        <div style={{
+          borderBottom: templateId === "minimal"
+            ? `0.5px solid ${fmt.accentColor}`
+            : templateId === "executive"
+            ? `2px solid ${fmt.headingColor}`
+            : `1.5px solid ${fmt.headingColor}`,
+          marginTop: "2px",
+          opacity: templateId === "minimal" ? 0.4 : 0.6,
+        }} />
       )}
     </div>
   );
