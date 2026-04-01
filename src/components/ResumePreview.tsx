@@ -251,11 +251,16 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
       }}
     >
       {/* Header */}
-      <div style={{ textAlign: "center", marginBottom: "4px" }}>
+      <div style={{
+        textAlign: templateId === "executive" ? "left" : "center",
+        marginBottom: `${fmt.headerContentGap}px`,
+        borderBottom: templateId === "executive" ? `2px solid ${fmt.headingColor}` : templateId === "modern" ? `1px solid ${fmt.accentColor}` : "none",
+        paddingBottom: templateId === "executive" || templateId === "modern" ? "6px" : "0",
+      }}>
         <h1 style={{
           fontSize: `${fmt.nameFontSize}px`,
           margin: 0,
-          letterSpacing: "1px",
+          letterSpacing: templateId === "minimal" ? "3px" : templateId === "modern" ? "2px" : "1px",
           textTransform: "uppercase",
           color: fmt.nameColor,
           ...fontStyle(fmt.nameStyle),
