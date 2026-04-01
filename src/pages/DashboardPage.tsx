@@ -446,7 +446,53 @@ export default function DashboardPage() {
                 <h2 className="text-xl font-semibold text-foreground mb-1 flex items-center gap-2">
                   <Settings2 className="h-5 w-5" /> Document Formatter
                 </h2>
-                <p className="text-sm text-muted-foreground mb-4">Changes update the preview instantly.</p>
+                <p className="text-sm text-muted-foreground mb-4">Pick a template or fine-tune every detail below.</p>
+              </div>
+
+              {/* Template Selector */}
+              <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+                <h3 className="font-semibold text-card-foreground text-sm">Resume Template</h3>
+                <div className="grid gap-2">
+                  {RESUME_TEMPLATES.map((tpl) => {
+                    const currentTemplate = data.resumeFormatting?.templateId ?? "classic";
+                    const isActive = currentTemplate === tpl.id;
+                    return (
+                      <button
+                        key={tpl.id}
+                        onClick={() => {
+                          update((d) => ({
+                            ...d,
+                            resumeFormatting: {
+                              ...DEFAULT_FORMATTING,
+                              ...d.resumeFormatting,
+                              ...tpl.formatting,
+                              hiddenSections: d.resumeFormatting?.hiddenSections ?? [],
+                            },
+                          }));
+                          toast.success(`Template applied: ${tpl.name}`);
+                        }}
+                        className={`flex items-start gap-3 rounded-lg border p-3 text-left transition-all ${
+                          isActive
+                            ? "border-primary bg-primary/10 ring-2 ring-primary"
+                            : "border-border bg-background hover:border-primary/50"
+                        }`}
+                      >
+                        <div className="flex items-center justify-center w-8 h-8 rounded-md shrink-0 mt-0.5" style={{
+                          backgroundColor: tpl.formatting.headingColor || "#000",
+                        }}>
+                          <FileText className="h-4 w-4 text-white" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm text-foreground">{tpl.name}</span>
+                            {isActive && <Check className="h-3.5 w-3.5 text-primary" />}
+                          </div>
+                          <p className="text-xs text-muted-foreground leading-snug">{tpl.description}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Font Sizes */}
