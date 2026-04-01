@@ -17,6 +17,7 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
   const fmt: ResumeFormatting = useMemo(() => ({ ...DEFAULT_FORMATTING, ...data.resumeFormatting }), [data.resumeFormatting]);
   const { projects, internships, certifications, skillCategories } = useMemo(() => getResumeItems(data), [data]);
   const sectionOrder: ResumeSectionId[] = data.resumeSelections?.sectionOrder || DEFAULT_SECTION_ORDER;
+  const templateId = fmt.templateId || "classic";
 
   const fontFamily = FONT_CSS_MAP[fmt.fontFamily] || FONT_CSS_MAP.Helvetica;
 
