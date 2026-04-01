@@ -435,6 +435,9 @@ export default function DashboardPage() {
                 <FileText className="h-4 w-4" /> Download Resume
               </Button>
             </div>
+
+            {/* ATS Score */}
+            <ATSScoreCard data={data} />
           </div>
         )}
 
