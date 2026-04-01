@@ -26,6 +26,7 @@ const QUANTIFIERS = /\d+%|\d+x|\$\d|\d+ (users|clients|projects|teams|months|yea
 export function analyzeATS(data: PortfolioData): ATSResult {
   const fmt: ResumeFormatting = { ...DEFAULT_FORMATTING, ...data.resumeFormatting };
   const { projects, internships, certifications, skillCategories } = getResumeItems(data);
+  const skillCats: string[] = [...skillCategories];
 
   const categories: ATSCategory[] = [
     analyzeFormatting(fmt),
