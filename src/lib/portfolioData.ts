@@ -64,7 +64,10 @@ export const DEFAULT_SECTION_ORDER: ResumeSectionId[] = [
 
 export type ResumeFontFamily = "Helvetica" | "Times" | "Courier" | "Georgia" | "Garamond";
 
+export type ResumeTemplateId = "classic" | "modern" | "minimal" | "executive" | "compact";
+
 export interface ResumeFormatting {
+  templateId: ResumeTemplateId;
   nameFontSize: number;
   headingFontSize: number;
   bodyFontSize: number;
@@ -80,7 +83,7 @@ export interface ResumeFormatting {
   nameColor: string;
   bodyColor: string;
   linkColor: string;
-  accentColor: string;       // dates, secondary text
+  accentColor: string;
   fontFamily: ResumeFontFamily;
   nameStyle: "normal" | "bold" | "italic";
   headingStyle: "normal" | "bold" | "italic";
@@ -91,6 +94,7 @@ export interface ResumeFormatting {
 }
 
 export const DEFAULT_FORMATTING: ResumeFormatting = {
+  templateId: "classic",
   nameFontSize: 16,
   headingFontSize: 12,
   bodyFontSize: 10.5,
@@ -115,6 +119,96 @@ export const DEFAULT_FORMATTING: ResumeFormatting = {
   headerContentGap: 4.5,
   subItemSpacing: 3.5,
 };
+
+export interface ResumeTemplate {
+  id: ResumeTemplateId;
+  name: string;
+  description: string;
+  formatting: Partial<ResumeFormatting>;
+}
+
+export const RESUME_TEMPLATES: ResumeTemplate[] = [
+  {
+    id: "classic",
+    name: "Classic",
+    description: "Traditional layout with section lines. Timeless and ATS-friendly.",
+    formatting: {
+      templateId: "classic",
+      fontFamily: "Helvetica",
+      nameFontSize: 16, headingFontSize: 12, bodyFontSize: 10.5, contactFontSize: 9,
+      marginMM: 25.4, showSectionLines: true,
+      nameColor: "#000000", headingColor: "#000000", bodyColor: "#000000",
+      accentColor: "#555555", linkColor: "#0050B4",
+      nameStyle: "bold", headingStyle: "bold", bodyStyle: "normal",
+      sectionGapBefore: 7, sectionGapAfter: 5, lineHeightMultiplier: 1.3,
+      itemSpacing: 3, subItemSpacing: 3.5, bulletSpacing: 1.5, headerContentGap: 4.5,
+    },
+  },
+  {
+    id: "modern",
+    name: "Modern",
+    description: "Clean sans-serif with colored headings, no divider lines.",
+    formatting: {
+      templateId: "modern",
+      fontFamily: "Helvetica",
+      nameFontSize: 18, headingFontSize: 11.5, bodyFontSize: 10, contactFontSize: 9,
+      marginMM: 22, showSectionLines: false,
+      nameColor: "#1a365d", headingColor: "#1e40af", bodyColor: "#1a1a1a",
+      accentColor: "#4a5568", linkColor: "#2563eb",
+      nameStyle: "bold", headingStyle: "bold", bodyStyle: "normal",
+      sectionGapBefore: 8, sectionGapAfter: 4, lineHeightMultiplier: 1.35,
+      itemSpacing: 4, subItemSpacing: 3, bulletSpacing: 1.5, headerContentGap: 4.5,
+    },
+  },
+  {
+    id: "minimal",
+    name: "Minimal",
+    description: "Ultra-clean with generous whitespace and subtle lines.",
+    formatting: {
+      templateId: "minimal",
+      fontFamily: "Georgia",
+      nameFontSize: 20, headingFontSize: 11, bodyFontSize: 10, contactFontSize: 8.5,
+      marginMM: 28, showSectionLines: true,
+      nameColor: "#333333", headingColor: "#333333", bodyColor: "#333333",
+      accentColor: "#888888", linkColor: "#555555",
+      nameStyle: "normal", headingStyle: "bold", bodyStyle: "normal",
+      sectionGapBefore: 10, sectionGapAfter: 6, lineHeightMultiplier: 1.45,
+      itemSpacing: 5, subItemSpacing: 4, bulletSpacing: 2, headerContentGap: 5,
+    },
+  },
+  {
+    id: "executive",
+    name: "Executive",
+    description: "Bold headers with a two-tone navy and gold color scheme.",
+    formatting: {
+      templateId: "executive",
+      fontFamily: "Garamond",
+      nameFontSize: 20, headingFontSize: 12.5, bodyFontSize: 10.5, contactFontSize: 9,
+      marginMM: 24, showSectionLines: true,
+      nameColor: "#1a365d", headingColor: "#1a365d", bodyColor: "#2d3748",
+      accentColor: "#8B6914", linkColor: "#1a365d",
+      nameStyle: "bold", headingStyle: "bold", bodyStyle: "normal",
+      sectionGapBefore: 8, sectionGapAfter: 5, lineHeightMultiplier: 1.35,
+      itemSpacing: 4, subItemSpacing: 3.5, bulletSpacing: 1.5, headerContentGap: 4.5,
+    },
+  },
+  {
+    id: "compact",
+    name: "Compact",
+    description: "Tighter spacing and smaller fonts to fit more content.",
+    formatting: {
+      templateId: "compact",
+      fontFamily: "Helvetica",
+      nameFontSize: 14, headingFontSize: 10.5, bodyFontSize: 9, contactFontSize: 8,
+      marginMM: 18, showSectionLines: true,
+      nameColor: "#000000", headingColor: "#2d3748", bodyColor: "#1a1a1a",
+      accentColor: "#666666", linkColor: "#0050B4",
+      nameStyle: "bold", headingStyle: "bold", bodyStyle: "normal",
+      sectionGapBefore: 5, sectionGapAfter: 3, lineHeightMultiplier: 1.2,
+      itemSpacing: 2, subItemSpacing: 2, bulletSpacing: 1, headerContentGap: 3,
+    },
+  },
+];
 
 export interface ResumeSelections {
   selectedProjects: string[];

@@ -17,6 +17,7 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
   const fmt: ResumeFormatting = useMemo(() => ({ ...DEFAULT_FORMATTING, ...data.resumeFormatting }), [data.resumeFormatting]);
   const { projects, internships, certifications, skillCategories } = useMemo(() => getResumeItems(data), [data]);
   const sectionOrder: ResumeSectionId[] = data.resumeSelections?.sectionOrder || DEFAULT_SECTION_ORDER;
+  const templateId = fmt.templateId || "classic";
 
   const fontFamily = FONT_CSS_MAP[fmt.fontFamily] || FONT_CSS_MAP.Helvetica;
 
@@ -52,14 +53,24 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
         fontSize: `${fmt.headingFontSize}px`,
         color: fmt.headingColor,
         textTransform: "uppercase",
-        letterSpacing: "0.5px",
+        letterSpacing: templateId === "modern" ? "1.5px" : templateId === "minimal" ? "2px" : "0.5px",
         margin: 0,
+        borderBottom: templateId === "modern" ? `2px solid ${fmt.headingColor}` : "none",
+        paddingBottom: templateId === "modern" ? "2px" : 0,
         ...fontStyle(fmt.headingStyle),
       }}>
         {title}
       </h2>
-      {fmt.showSectionLines && (
-        <div style={{ borderBottom: `1.5px solid ${fmt.headingColor}`, marginTop: "2px", opacity: 0.6 }} />
+      {fmt.showSectionLines && templateId !== "modern" && (
+        <div style={{
+          borderBottom: templateId === "minimal"
+            ? `0.5px solid ${fmt.accentColor}`
+            : templateId === "executive"
+            ? `2px solid ${fmt.headingColor}`
+            : `1.5px solid ${fmt.headingColor}`,
+          marginTop: "2px",
+          opacity: templateId === "minimal" ? 0.4 : 0.6,
+        }} />
       )}
     </div>
   );
@@ -240,11 +251,16 @@ export default function ResumePreview({ data }: ResumePreviewProps) {
       }}
     >
       {/* Header */}
-      <div style={{ textAlign: "center", marginBottom: "4px" }}>
+      <div style={{
+        textAlign: templateId === "executive" ? "left" : "center",
+        marginBottom: `${fmt.headerContentGap}px`,
+        borderBottom: templateId === "executive" ? `2px solid ${fmt.headingColor}` : templateId === "modern" ? `1px solid ${fmt.accentColor}` : "none",
+        paddingBottom: templateId === "executive" || templateId === "modern" ? "6px" : "0",
+      }}>
         <h1 style={{
           fontSize: `${fmt.nameFontSize}px`,
           margin: 0,
-          letterSpacing: "1px",
+          letterSpacing: templateId === "minimal" ? "3px" : templateId === "modern" ? "2px" : "1px",
           textTransform: "uppercase",
           color: fmt.nameColor,
           ...fontStyle(fmt.nameStyle),
