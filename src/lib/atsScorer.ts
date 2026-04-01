@@ -30,7 +30,7 @@ export function analyzeATS(data: PortfolioData): ATSResult {
 
   const categories: ATSCategory[] = [
     analyzeFormatting(fmt),
-    analyzeStructure(data, projects, internships, certifications, skillCategories),
+    analyzeStructure(data, projects, internships, certifications, skillCats),
     analyzeKeywords(data, projects, internships),
     analyzeReadability(data, fmt, projects, internships),
   ];
