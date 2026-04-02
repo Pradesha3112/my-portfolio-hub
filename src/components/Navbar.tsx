@@ -138,6 +138,9 @@ export default function Navbar() {
           </button>
           {admin && (
             <>
+              <Link to="/job-match" onClick={() => setOpen(false)} className="block px-3 py-2 text-sm font-medium text-muted-foreground">
+                🎯 Job Match
+              </Link>
               <Link to="/dashboard" onClick={() => setOpen(false)} className="block px-3 py-2 text-sm font-medium text-muted-foreground">
                 🔐 Dashboard
               </Link>
