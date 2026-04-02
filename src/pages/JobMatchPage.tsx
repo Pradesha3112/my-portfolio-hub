@@ -149,6 +149,20 @@ export default function JobMatchPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const hasAutoAnalyzed = useRef(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("jobMatchDescription");
+    if (saved && !hasAutoAnalyzed.current) {
+      setJobDescription(saved);
+      localStorage.removeItem("jobMatchDescription");
+      hasAutoAnalyzed.current = true;
+      // Auto-trigger analysis after state is set
+      setTimeout(() => {
+        document.getElementById("analyze-btn")?.click();
+      }, 100);
+    }
+  }, []);
 
   const handleAnalyze = async () => {
     if (!jobDescription.trim()) {
