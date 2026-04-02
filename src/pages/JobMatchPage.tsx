@@ -259,7 +259,7 @@ export default function JobMatchPage() {
             <span className="text-xs text-muted-foreground">
               {jobDescription.length > 0 ? `${jobDescription.split(/\s+/).filter(Boolean).length} words` : ""}
             </span>
-            <Button onClick={handleAnalyze} disabled={loading || !jobDescription.trim()}>
+            <Button id="analyze-btn" onClick={handleAnalyze} disabled={loading || !jobDescription.trim()}>
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
