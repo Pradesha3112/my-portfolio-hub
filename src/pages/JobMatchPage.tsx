@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { isAdmin } from "@/lib/auth";
 import { getPortfolioData, type PortfolioData } from "@/lib/portfolioData";
