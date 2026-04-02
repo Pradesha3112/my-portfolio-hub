@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { isAdmin, logout } from "@/lib/auth";
-import { Menu, X, Shield, LogOut, Download } from "lucide-react";
+import { Menu, X, Shield, LogOut, Download, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { generateResume } from "@/lib/resumeGenerator";
 import { toast } from "sonner";
@@ -83,6 +83,11 @@ export default function Navbar() {
           </Button>
           {admin && (
             <>
+              <Link to="/job-match">
+                <Button variant="outline" size="sm" className="gap-1">
+                  <Target className="h-4 w-4" /> Job Match
+                </Button>
+              </Link>
               <Link to="/dashboard">
                 <Button variant="secondary" size="sm" className="ml-1 gap-1">
                   <Shield className="h-4 w-4" /> Dashboard
@@ -133,6 +138,9 @@ export default function Navbar() {
           </button>
           {admin && (
             <>
+              <Link to="/job-match" onClick={() => setOpen(false)} className="block px-3 py-2 text-sm font-medium text-muted-foreground">
+                🎯 Job Match
+              </Link>
               <Link to="/dashboard" onClick={() => setOpen(false)} className="block px-3 py-2 text-sm font-medium text-muted-foreground">
                 🔐 Dashboard
               </Link>
