@@ -11,6 +11,7 @@ import ExperiencePage from "./pages/ExperiencePage";
 import ProjectsPage from "./pages/ProjectsPage";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
+import JobMatchPage from "./pages/JobMatchPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
