@@ -438,6 +438,34 @@ export default function DashboardPage() {
 
             {/* ATS Score */}
             <ATSScoreCard data={data} />
+
+            {/* Job Match Analyzer */}
+            <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+              <h3 className="font-semibold text-card-foreground flex items-center gap-2">
+                <Target className="h-5 w-5 text-primary" /> Job Match Analyzer
+              </h3>
+              <p className="text-sm text-muted-foreground">Paste a job description below to see how well your resume matches and get AI-powered suggestions.</p>
+              <Textarea
+                placeholder="Paste the job description here..."
+                className="min-h-[120px]"
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
+              />
+              <Button
+                onClick={() => {
+                  if (!jobDescription.trim()) {
+                    toast.error("Please enter a job description first");
+                    return;
+                  }
+                  localStorage.setItem("jobMatchDescription", jobDescription);
+                  navigate("/job-match");
+                }}
+                className="gap-2"
+                disabled={!jobDescription.trim()}
+              >
+                <Search className="h-4 w-4" /> Analyze Job Match
+              </Button>
+            </div>
           </div>
         )}
 
