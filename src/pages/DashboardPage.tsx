@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { LogOut, Trash2, Plus, Undo2, RotateCcw, Save, Palette, Check, Calendar as CalendarIcon, Image, Video, Eye, FileText, AlertTriangle, ArrowUp, ArrowDown, GripVertical, Settings2, EyeOff, Type } from "lucide-react";
+import { LogOut, Trash2, Plus, Undo2, RotateCcw, Save, Palette, Check, Calendar as CalendarIcon, Image, Video, Eye, FileText, AlertTriangle, ArrowUp, ArrowDown, GripVertical, Settings2, EyeOff, Type, Target, Search } from "lucide-react";
 import ResumePreview from "@/components/ResumePreview";
 import ATSScoreCard from "@/components/ATSScoreCard";
 import { themeOptions, getSavedTheme, saveTheme, type ThemeOption } from "@/lib/themeManager";
@@ -28,6 +28,7 @@ export default function DashboardPage() {
   const { data, update, undo, reset } = usePortfolio();
   const [activeTab, setActiveTab] = useState("profile");
   const [selectedTheme, setSelectedTheme] = useState<ThemeOption>(getSavedTheme());
+  const [jobDescription, setJobDescription] = useState("");
   const [showResetDialog, setShowResetDialog] = useState(false);
 
   useEffect(() => {
@@ -438,6 +439,34 @@ export default function DashboardPage() {
 
             {/* ATS Score */}
             <ATSScoreCard data={data} />
+
+            {/* Job Match Analyzer */}
+            <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+              <h3 className="font-semibold text-card-foreground flex items-center gap-2">
+                <Target className="h-5 w-5 text-primary" /> Job Match Analyzer
+              </h3>
+              <p className="text-sm text-muted-foreground">Paste a job description below to see how well your resume matches and get AI-powered suggestions.</p>
+              <Textarea
+                placeholder="Paste the job description here..."
+                className="min-h-[120px]"
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
+              />
+              <Button
+                onClick={() => {
+                  if (!jobDescription.trim()) {
+                    toast.error("Please enter a job description first");
+                    return;
+                  }
+                  localStorage.setItem("jobMatchDescription", jobDescription);
+                  navigate("/job-match");
+                }}
+                className="gap-2"
+                disabled={!jobDescription.trim()}
+              >
+                <Search className="h-4 w-4" /> Analyze Job Match
+              </Button>
+            </div>
           </div>
         )}
 

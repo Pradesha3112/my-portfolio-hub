@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { isAdmin } from "@/lib/auth";
 import { getPortfolioData, type PortfolioData } from "@/lib/portfolioData";
@@ -149,6 +149,20 @@ export default function JobMatchPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const hasAutoAnalyzed = useRef(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("jobMatchDescription");
+    if (saved && !hasAutoAnalyzed.current) {
+      setJobDescription(saved);
+      localStorage.removeItem("jobMatchDescription");
+      hasAutoAnalyzed.current = true;
+      // Auto-trigger analysis after state is set
+      setTimeout(() => {
+        document.getElementById("analyze-btn")?.click();
+      }, 100);
+    }
+  }, []);
 
   const handleAnalyze = async () => {
     if (!jobDescription.trim()) {
@@ -245,7 +259,7 @@ export default function JobMatchPage() {
             <span className="text-xs text-muted-foreground">
               {jobDescription.length > 0 ? `${jobDescription.split(/\s+/).filter(Boolean).length} words` : ""}
             </span>
-            <Button onClick={handleAnalyze} disabled={loading || !jobDescription.trim()}>
+            <Button id="analyze-btn" onClick={handleAnalyze} disabled={loading || !jobDescription.trim()}>
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
