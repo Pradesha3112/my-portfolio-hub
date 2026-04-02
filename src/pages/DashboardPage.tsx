@@ -28,6 +28,7 @@ export default function DashboardPage() {
   const { data, update, undo, reset } = usePortfolio();
   const [activeTab, setActiveTab] = useState("profile");
   const [selectedTheme, setSelectedTheme] = useState<ThemeOption>(getSavedTheme());
+  const [jobDescription, setJobDescription] = useState("");
   const [showResetDialog, setShowResetDialog] = useState(false);
 
   useEffect(() => {
