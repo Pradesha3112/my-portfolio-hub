@@ -83,6 +83,11 @@ export default function Navbar() {
           </Button>
           {admin && (
             <>
+              <Link to="/job-match">
+                <Button variant="outline" size="sm" className="gap-1">
+                  <Target className="h-4 w-4" /> Job Match
+                </Button>
+              </Link>
               <Link to="/dashboard">
                 <Button variant="secondary" size="sm" className="ml-1 gap-1">
                   <Shield className="h-4 w-4" /> Dashboard
