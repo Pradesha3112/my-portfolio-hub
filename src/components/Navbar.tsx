@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { isAdmin, logout } from "@/lib/auth";
-import { Menu, X, Shield, LogOut, Download } from "lucide-react";
+import { Menu, X, Shield, LogOut, Download, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { generateResume } from "@/lib/resumeGenerator";
 import { toast } from "sonner";
