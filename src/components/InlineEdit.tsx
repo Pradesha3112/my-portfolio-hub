@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { isAdmin } from "@/lib/auth";
 import { getPortfolioData, savePortfolioData, generateId, type PortfolioData, type Education, type Internship, type Project, type Certification } from "@/lib/portfolioData";
+import { usePortfolioVersion } from "@/contexts/PortfolioVersionContext";
+import { applyVersionOverrides } from "@/lib/portfolioVersions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,10 +12,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Pencil, Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
 
-// Hook to manage inline edits with re-render
+// Hook to manage inline edits with re-render — applies version overrides
 export function useInlineData() {
   const [revision, setRevision] = useState(0);
-  const data = getPortfolioData();
+  const { version } = usePortfolioVersion();
+  const rawData = getPortfolioData();
+  const data = applyVersionOverrides(rawData, version);
 
   const save = (updater: (d: PortfolioData) => PortfolioData) => {
     const current = getPortfolioData();

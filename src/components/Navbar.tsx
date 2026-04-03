@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { isAdmin, logout } from "@/lib/auth";
 import { Menu, X, Shield, LogOut, Download, Target } from "lucide-react";
+import VersionSwitcher from "@/components/VersionSwitcher";
 import { Button } from "@/components/ui/button";
 import { generateResume } from "@/lib/resumeGenerator";
 import { toast } from "sonner";
@@ -78,6 +79,7 @@ export default function Navbar() {
               {l.label}
             </Link>
           ))}
+          <VersionSwitcher />
           <Button variant="outline" size="sm" className="ml-2 gap-1" onClick={handleDownloadResume}>
             <Download className="h-4 w-4" /> Resume
           </Button>
@@ -133,6 +135,9 @@ export default function Navbar() {
               {l.label}
             </Link>
           ))}
+          <div className="px-3 py-2">
+            <VersionSwitcher />
+          </div>
           <button onClick={handleDownloadResume} className="block w-full text-left px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">
             📄 Download Resume
           </button>
