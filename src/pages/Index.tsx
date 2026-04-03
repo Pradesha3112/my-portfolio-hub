@@ -32,6 +32,7 @@ const skillCategories = [
 
 export default function Index() {
   const { data: d, save } = useInlineData();
+  const admin = isAdmin();
   const { version, setVersion } = usePortfolioVersion();
   const currentVersion = PORTFOLIO_VERSIONS.find((v) => v.id === version)!;
   const featured = d.projects.filter((p) => p.featured).slice(0, 3);
