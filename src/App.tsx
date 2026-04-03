@@ -39,6 +39,7 @@ const App = () => (
         <Footer />
       </BrowserRouter>
     </TooltipProvider>
+    </PortfolioVersionProvider>
   </QueryClientProvider>
 );
 
