@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { getPortfolioData, savePortfolioData, type PortfolioData } from "@/lib/portfolioData";
 import { isAdmin } from "@/lib/auth";
+import { usePortfolioVersion } from "@/contexts/PortfolioVersionContext";
+import { PORTFOLIO_VERSIONS } from "@/lib/portfolioVersions";
 import AnimatedSection from "@/components/AnimatedSection";
 import SkillBar from "@/components/SkillBar";
 import { Mail, Linkedin, Github, ArrowRight, GraduationCap, Pencil, Plus, Award, Trophy, Trash2, Check, X, Send } from "lucide-react";
