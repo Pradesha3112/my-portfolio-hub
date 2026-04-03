@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { getPortfolioData, savePortfolioData, type PortfolioData } from "@/lib/portfolioData";
 import { isAdmin } from "@/lib/auth";
+import { usePortfolioVersion } from "@/contexts/PortfolioVersionContext";
+import { PORTFOLIO_VERSIONS } from "@/lib/portfolioVersions";
 import AnimatedSection from "@/components/AnimatedSection";
 import SkillBar from "@/components/SkillBar";
 import { Mail, Linkedin, Github, ArrowRight, GraduationCap, Pencil, Plus, Award, Trophy, Trash2, Check, X, Send } from "lucide-react";
@@ -31,6 +33,8 @@ const skillCategories = [
 export default function Index() {
   const { data: d, save } = useInlineData();
   const admin = isAdmin();
+  const { version, setVersion } = usePortfolioVersion();
+  const currentVersion = PORTFOLIO_VERSIONS.find((v) => v.id === version)!;
   const featured = d.projects.filter((p) => p.featured).slice(0, 3);
 
   // Skills editing state
@@ -82,7 +86,23 @@ export default function Index() {
         <div className="absolute inset-0 -z-10 bg-gradient-to-br from-accent via-background to-secondary opacity-60" />
         <div className="container text-center">
           <AnimatedSection>
-            <Badge variant="secondary" className="mb-4 text-sm">{d.role}</Badge>
+            <Badge variant="secondary" className="mb-2 text-sm">{d.role}</Badge>
+            <div className="mb-4 flex justify-center gap-2 flex-wrap">
+              {PORTFOLIO_VERSIONS.map((v) => (
+                <button
+                  key={v.id}
+                  onClick={() => { setVersion(v.id); toast.success(`Switched to ${v.label}`); }}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-all duration-300 ${
+                    v.id === version
+                      ? "bg-primary text-primary-foreground shadow-md scale-105"
+                      : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  }`}
+                >
+                  <span>{v.icon}</span>
+                  {v.label.replace(" Portfolio", "")}
+                </button>
+              ))}
+            </div>
             <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-6xl">
               Hi, I'm <span className="text-primary">{d.name}</span>
             </h1>
