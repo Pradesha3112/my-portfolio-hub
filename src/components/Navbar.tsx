@@ -79,7 +79,6 @@ export default function Navbar() {
               {l.label}
             </Link>
           ))}
-          <VersionSwitcher />
           <Button variant="outline" size="sm" className="ml-2 gap-1" onClick={handleDownloadResume}>
             <Download className="h-4 w-4" /> Resume
           </Button>
