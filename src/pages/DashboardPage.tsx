@@ -49,6 +49,7 @@ export default function DashboardPage() {
     { id: "resume", label: "📄 Resume" },
     { id: "format", label: "📝 Format" },
     { id: "theme", label: "🎨 Theme" },
+    { id: "versions", label: "🔄 Versions" },
   ];
 
   const handleSaveTheme = () => {
