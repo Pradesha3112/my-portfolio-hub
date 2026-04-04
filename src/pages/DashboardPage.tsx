@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { isAdmin, logout } from "@/lib/auth";
 import { usePortfolio } from "@/hooks/usePortfolio";
+import { usePortfolioVersion } from "@/contexts/PortfolioVersionContext";
 import { generateId, getResumeItems, type Education, type Internship, type Project, type Certification, DEFAULT_SECTION_ORDER, DEFAULT_FORMATTING, type ResumeSectionId, type ResumeFormatting, type ResumeFontFamily, type ResumeTemplateId, RESUME_TEMPLATES } from "@/lib/portfolioData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { LogOut, Trash2, Plus, Undo2, RotateCcw, Save, Palette, Check, Calendar as CalendarIcon, Image, Video, Eye, FileText, AlertTriangle, ArrowUp, ArrowDown, GripVertical, Settings2, EyeOff, Type, Target, Search } from "lucide-react";
+import { LogOut, Trash2, Plus, Undo2, RotateCcw, Save, Palette, Check, Calendar as CalendarIcon, Image, Video, Eye, FileText, AlertTriangle, ArrowUp, ArrowDown, GripVertical, Settings2, EyeOff, Type, Target, Search, Layers, Star, Pencil } from "lucide-react";
 import ResumePreview from "@/components/ResumePreview";
 import ATSScoreCard from "@/components/ATSScoreCard";
 import { themeOptions, getSavedTheme, saveTheme, type ThemeOption } from "@/lib/themeManager";
@@ -48,6 +49,7 @@ export default function DashboardPage() {
     { id: "resume", label: "📄 Resume" },
     { id: "format", label: "📝 Format" },
     { id: "theme", label: "🎨 Theme" },
+    { id: "versions", label: "🔄 Versions" },
   ];
 
   const handleSaveTheme = () => {
@@ -792,6 +794,9 @@ export default function DashboardPage() {
             </Button>
           </div>
         )}
+
+        {/* Versions Management */}
+        {activeTab === "versions" && <VersionsManager />}
       </div>
     </main>
   );
@@ -1147,6 +1152,311 @@ function CertificationEditor({ items, onUpdate }: { items: Certification[]; onUp
         toast.success("Certification added");
       }} className="gap-1">
         <Plus className="h-4 w-4" /> Add Certification
+      </Button>
+    </div>
+  );
+}
+
+// ============ Version Management (Admin CMS) ============
+function VersionsManager() {
+  const {
+    activeVersionId,
+    versions,
+    setActive,
+    getVersionData: getVerData,
+    saveVersionData: saveVerData,
+    createVersion: createVer,
+    deleteVersion: deleteVer,
+    updateVersionMeta,
+  } = usePortfolioVersion();
+
+  const [editingVersion, setEditingVersion] = useState<string | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [newLabel, setNewLabel] = useState("");
+  const [newIcon, setNewIcon] = useState("📁");
+  const [newDesc, setNewDesc] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+
+  const handleCreate = () => {
+    if (!newLabel.trim()) { toast.error("Version name is required"); return; }
+    createVer(newLabel.trim(), newIcon, newDesc.trim());
+    toast.success(`Version "${newLabel}" created`);
+    setNewLabel(""); setNewIcon("📁"); setNewDesc(""); setShowCreate(false);
+  };
+
+  const handleSetActive = (id: string) => {
+    setActive(id);
+    const v = versions.find((v) => v.id === id);
+    toast.success(`"${v?.label}" is now the live portfolio`);
+  };
+
+  const handleDelete = (id: string) => {
+    if (versions.length <= 1) { toast.error("Cannot delete the only version"); return; }
+    deleteVer(id);
+    toast.success("Version deleted");
+    setDeleteTarget(null);
+  };
+
+  return (
+    <div className="max-w-3xl space-y-6">
+      <div>
+        <h2 className="text-xl font-semibold text-foreground mb-1 flex items-center gap-2">
+          <Layers className="h-5 w-5" /> Portfolio Versions
+        </h2>
+        <p className="text-sm text-muted-foreground mb-6">
+          Manage multiple portfolio versions. Only the active version is visible to public viewers.
+        </p>
+      </div>
+
+      {/* Active badge */}
+      <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 flex items-center gap-3">
+        <Star className="h-5 w-5 text-primary" />
+        <div>
+          <p className="text-sm font-medium text-foreground">
+            Currently Live: <span className="text-primary">{versions.find((v) => v.id === activeVersionId)?.label}</span>
+          </p>
+          <p className="text-xs text-muted-foreground">This is the version public visitors see.</p>
+        </div>
+      </div>
+
+      {/* Version cards */}
+      <div className="space-y-4">
+        {versions.map((v) => (
+          <div key={v.id} className={`rounded-lg border p-5 transition-all ${v.isActive ? "border-primary bg-primary/5" : "border-border bg-card"}`}>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3 flex-1">
+                <span className="text-2xl mt-0.5">{v.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-semibold text-foreground">{v.label}</h3>
+                    {v.isActive && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-primary text-primary-foreground text-xs px-2 py-0.5 font-medium">
+                        <Check className="h-3 w-3" /> Live
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-0.5">{v.description}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Updated: {new Date(v.updatedAt).toLocaleString()}</p>
+                </div>
+              </div>
+              <div className="flex gap-2 flex-shrink-0">
+                {!v.isActive && (
+                  <Button size="sm" onClick={() => handleSetActive(v.id)} className="gap-1">
+                    <Star className="h-3 w-3" /> Set as Live
+                  </Button>
+                )}
+                <Button variant="outline" size="sm" onClick={() => setEditingVersion(editingVersion === v.id ? null : v.id)} className="gap-1">
+                  <Pencil className="h-3 w-3" /> Edit
+                </Button>
+                {!v.isActive && (
+                  <Button variant="ghost" size="sm" className="text-destructive gap-1" onClick={() => setDeleteTarget(v.id)}>
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Inline version editor */}
+            {editingVersion === v.id && (
+              <VersionDataEditor versionId={v.id} />
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Create new version */}
+      {showCreate ? (
+        <div className="rounded-lg border border-border bg-card p-5 space-y-3">
+          <h3 className="font-semibold text-foreground">Create New Version</h3>
+          <div><Label>Name</Label><Input value={newLabel} onChange={(e) => setNewLabel(e.target.value)} placeholder="e.g. Data Science Portfolio" /></div>
+          <div><Label>Icon (emoji)</Label><Input value={newIcon} onChange={(e) => setNewIcon(e.target.value)} className="w-20" /></div>
+          <div><Label>Description</Label><Input value={newDesc} onChange={(e) => setNewDesc(e.target.value)} placeholder="Short description" /></div>
+          <div className="flex gap-2">
+            <Button onClick={handleCreate} className="gap-1"><Plus className="h-4 w-4" /> Create</Button>
+            <Button variant="ghost" onClick={() => setShowCreate(false)}>Cancel</Button>
+          </div>
+        </div>
+      ) : (
+        <Button variant="outline" onClick={() => setShowCreate(true)} className="gap-1">
+          <Plus className="h-4 w-4" /> Create New Version
+        </Button>
+      )}
+
+      {/* Delete confirmation */}
+      <Dialog open={deleteTarget !== null} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-destructive" /> Delete Version?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">This will permanently delete this version and all its data. This action cannot be undone.</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => deleteTarget && handleDelete(deleteTarget)}>Delete Version</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// ============ Per-Version Data Editor ============
+function VersionDataEditor({ versionId }: { versionId: string }) {
+  const { getVersionData: getVerData, saveVersionData: saveVerData } = usePortfolioVersion();
+  const [data, setData] = useState(() => getVerData(versionId));
+  const [activeSection, setActiveSection] = useState("profile");
+
+  const sections = [
+    { id: "profile", label: "👤 Profile" },
+    { id: "education", label: "🎓 Education" },
+    { id: "internships", label: "💼 Internships" },
+    { id: "projects", label: "🧩 Projects" },
+    { id: "certifications", label: "📜 Certifications" },
+    { id: "skills", label: "🛠 Skills" },
+    { id: "achievements", label: "🏆 Achievements" },
+  ];
+
+  const handleSave = () => {
+    saveVerData(versionId, data);
+    toast.success("Version data saved!");
+  };
+
+  return (
+    <div className="mt-4 border-t border-border pt-4 space-y-4">
+      <div className="flex flex-wrap gap-1">
+        {sections.map((s) => (
+          <Button key={s.id} variant={activeSection === s.id ? "default" : "ghost"} size="sm" onClick={() => setActiveSection(s.id)} className="text-xs">
+            {s.label}
+          </Button>
+        ))}
+      </div>
+
+      {activeSection === "profile" && (
+        <div className="space-y-3">
+          <div><Label>Name</Label><Input value={data.name} onChange={(e) => setData({ ...data, name: e.target.value })} /></div>
+          <div><Label>Role</Label><Input value={data.role} onChange={(e) => setData({ ...data, role: e.target.value })} /></div>
+          <div><Label>Introduction</Label><Textarea value={data.intro} onChange={(e) => setData({ ...data, intro: e.target.value })} rows={4} /></div>
+          <div><Label>Email</Label><Input value={data.email} onChange={(e) => setData({ ...data, email: e.target.value })} /></div>
+          <div><Label>LinkedIn</Label><Input value={data.linkedin} onChange={(e) => setData({ ...data, linkedin: e.target.value })} /></div>
+          <div><Label>GitHub</Label><Input value={data.github} onChange={(e) => setData({ ...data, github: e.target.value })} /></div>
+        </div>
+      )}
+
+      {activeSection === "education" && (
+        <div className="space-y-3">
+          {data.education.map((e, i) => (
+            <div key={e.id} className="rounded border border-border p-3 space-y-2">
+              <Input value={e.institution} onChange={(ev) => { const arr = [...data.education]; arr[i] = { ...arr[i], institution: ev.target.value }; setData({ ...data, education: arr }); }} placeholder="Institution" />
+              <Input value={e.course} onChange={(ev) => { const arr = [...data.education]; arr[i] = { ...arr[i], course: ev.target.value }; setData({ ...data, education: arr }); }} placeholder="Course" />
+              <div className="flex gap-2">
+                <Input value={e.duration} onChange={(ev) => { const arr = [...data.education]; arr[i] = { ...arr[i], duration: ev.target.value }; setData({ ...data, education: arr }); }} placeholder="Duration" />
+                <Input value={e.score} onChange={(ev) => { const arr = [...data.education]; arr[i] = { ...arr[i], score: ev.target.value }; setData({ ...data, education: arr }); }} placeholder="Score" />
+              </div>
+              <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setData({ ...data, education: data.education.filter((_, j) => j !== i) })}>
+                <Trash2 className="h-3 w-3 mr-1" /> Remove
+              </Button>
+            </div>
+          ))}
+          <Button variant="outline" size="sm" onClick={() => setData({ ...data, education: [...data.education, { id: generateId(), institution: "", course: "", duration: "", score: "" }] })}>
+            <Plus className="h-3 w-3 mr-1" /> Add Education
+          </Button>
+        </div>
+      )}
+
+      {activeSection === "internships" && (
+        <div className="space-y-3">
+          {data.internships.map((item, i) => (
+            <div key={item.id} className="rounded border border-border p-3 space-y-2">
+              <Input value={item.role} onChange={(ev) => { const arr = [...data.internships]; arr[i] = { ...arr[i], role: ev.target.value }; setData({ ...data, internships: arr }); }} placeholder="Role" />
+              <Input value={item.organization} onChange={(ev) => { const arr = [...data.internships]; arr[i] = { ...arr[i], organization: ev.target.value }; setData({ ...data, internships: arr }); }} placeholder="Organization" />
+              <Input value={item.duration} onChange={(ev) => { const arr = [...data.internships]; arr[i] = { ...arr[i], duration: ev.target.value }; setData({ ...data, internships: arr }); }} placeholder="Duration" />
+              <Textarea value={item.responsibilities} onChange={(ev) => { const arr = [...data.internships]; arr[i] = { ...arr[i], responsibilities: ev.target.value }; setData({ ...data, internships: arr }); }} placeholder="Responsibilities" rows={3} />
+              <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setData({ ...data, internships: data.internships.filter((_, j) => j !== i) })}>
+                <Trash2 className="h-3 w-3 mr-1" /> Remove
+              </Button>
+            </div>
+          ))}
+          <Button variant="outline" size="sm" onClick={() => setData({ ...data, internships: [...data.internships, { id: generateId(), role: "", organization: "", duration: "", responsibilities: "" }] })}>
+            <Plus className="h-3 w-3 mr-1" /> Add Internship
+          </Button>
+        </div>
+      )}
+
+      {activeSection === "projects" && (
+        <div className="space-y-3">
+          {data.projects.map((p, i) => (
+            <div key={p.id} className="rounded border border-border p-3 space-y-2">
+              <Input value={p.title} onChange={(ev) => { const arr = [...data.projects]; arr[i] = { ...arr[i], title: ev.target.value }; setData({ ...data, projects: arr }); }} placeholder="Title" />
+              <Textarea value={p.description} onChange={(ev) => { const arr = [...data.projects]; arr[i] = { ...arr[i], description: ev.target.value }; setData({ ...data, projects: arr }); }} placeholder="Description" rows={2} />
+              <Input value={p.techStack.join(", ")} onChange={(ev) => { const arr = [...data.projects]; arr[i] = { ...arr[i], techStack: ev.target.value.split(",").map((s) => s.trim()).filter(Boolean) }; setData({ ...data, projects: arr }); }} placeholder="Tech stack (comma-separated)" />
+              <Input value={p.link} onChange={(ev) => { const arr = [...data.projects]; arr[i] = { ...arr[i], link: ev.target.value }; setData({ ...data, projects: arr }); }} placeholder="Project link" />
+              <div className="flex items-center gap-2">
+                <Switch checked={p.featured} onCheckedChange={(v) => { const arr = [...data.projects]; arr[i] = { ...arr[i], featured: v }; setData({ ...data, projects: arr }); }} />
+                <Label className="text-xs">Featured</Label>
+              </div>
+              <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setData({ ...data, projects: data.projects.filter((_, j) => j !== i) })}>
+                <Trash2 className="h-3 w-3 mr-1" /> Remove
+              </Button>
+            </div>
+          ))}
+          <Button variant="outline" size="sm" onClick={() => setData({ ...data, projects: [...data.projects, { id: generateId(), title: "", description: "", techStack: [], link: "", featured: false }] })}>
+            <Plus className="h-3 w-3 mr-1" /> Add Project
+          </Button>
+        </div>
+      )}
+
+      {activeSection === "certifications" && (
+        <div className="space-y-3">
+          {data.certifications.map((c, i) => (
+            <div key={c.id} className="rounded border border-border p-3 space-y-2">
+              <Input value={c.title} onChange={(ev) => { const arr = [...data.certifications]; arr[i] = { ...arr[i], title: ev.target.value }; setData({ ...data, certifications: arr }); }} placeholder="Title" />
+              <div className="flex gap-2">
+                <Input value={c.platform} onChange={(ev) => { const arr = [...data.certifications]; arr[i] = { ...arr[i], platform: ev.target.value }; setData({ ...data, certifications: arr }); }} placeholder="Platform" />
+                <Input value={c.date} onChange={(ev) => { const arr = [...data.certifications]; arr[i] = { ...arr[i], date: ev.target.value }; setData({ ...data, certifications: arr }); }} placeholder="Date" />
+              </div>
+              <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setData({ ...data, certifications: data.certifications.filter((_, j) => j !== i) })}>
+                <Trash2 className="h-3 w-3 mr-1" /> Remove
+              </Button>
+            </div>
+          ))}
+          <Button variant="outline" size="sm" onClick={() => setData({ ...data, certifications: [...data.certifications, { id: generateId(), title: "", platform: "", date: "" }] })}>
+            <Plus className="h-3 w-3 mr-1" /> Add Certification
+          </Button>
+        </div>
+      )}
+
+      {activeSection === "skills" && (
+        <div className="space-y-3">
+          {(["languages", "tools", "platforms", "other"] as const).map((cat) => (
+            <div key={cat}>
+              <Label className="capitalize">{cat}</Label>
+              <Input
+                value={data.skills[cat].join(", ")}
+                onChange={(e) => setData({ ...data, skills: { ...data.skills, [cat]: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) } })}
+                placeholder="Comma-separated"
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {activeSection === "achievements" && (
+        <div className="space-y-3">
+          {data.achievements.map((a, i) => (
+            <div key={i} className="flex gap-2">
+              <Input value={a} onChange={(e) => { const arr = [...data.achievements]; arr[i] = e.target.value; setData({ ...data, achievements: arr }); }} />
+              <Button variant="ghost" size="icon" className="text-destructive flex-shrink-0" onClick={() => setData({ ...data, achievements: data.achievements.filter((_, j) => j !== i) })}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+          <Button variant="outline" size="sm" onClick={() => setData({ ...data, achievements: [...data.achievements, ""] })}>
+            <Plus className="h-3 w-3 mr-1" /> Add Achievement
+          </Button>
+        </div>
+      )}
+
+      <Button onClick={handleSave} className="gap-1">
+        <Save className="h-4 w-4" /> Save Version Data
       </Button>
     </div>
   );

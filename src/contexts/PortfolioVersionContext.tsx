@@ -1,29 +1,81 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import {
   type PortfolioVersionId,
-  getStoredVersion,
-  setStoredVersion,
-  PORTFOLIO_VERSIONS,
+  type PortfolioVersionMeta,
+  getVersionsMeta,
+  getActiveVersionId,
+  setActiveVersion,
+  getVersionData,
+  saveVersionData,
+  createVersion,
+  deleteVersion,
+  updateVersionMeta,
 } from "@/lib/portfolioVersions";
+import type { PortfolioData } from "@/lib/portfolioData";
 
 interface VersionContextValue {
-  version: PortfolioVersionId;
-  setVersion: (id: PortfolioVersionId) => void;
-  versions: typeof PORTFOLIO_VERSIONS;
+  // For public: the active version's data
+  activeVersionId: PortfolioVersionId;
+  // For admin: full version management
+  versions: PortfolioVersionMeta[];
+  refreshVersions: () => void;
+  setActive: (id: PortfolioVersionId) => void;
+  getVersionData: (id: PortfolioVersionId) => PortfolioData;
+  saveVersionData: (id: PortfolioVersionId, data: PortfolioData) => void;
+  createVersion: (label: string, icon: string, description: string) => PortfolioVersionMeta;
+  deleteVersion: (id: PortfolioVersionId) => void;
+  updateVersionMeta: (id: PortfolioVersionId, updates: Partial<Pick<PortfolioVersionMeta, "label" | "icon" | "description">>) => void;
 }
 
 const VersionContext = createContext<VersionContextValue | null>(null);
 
 export function PortfolioVersionProvider({ children }: { children: ReactNode }) {
-  const [version, setVersionState] = useState<PortfolioVersionId>(getStoredVersion);
+  const [versions, setVersions] = useState<PortfolioVersionMeta[]>(getVersionsMeta);
+  const [activeVersionId, setActiveVersionId] = useState<PortfolioVersionId>(getActiveVersionId);
 
-  const setVersion = useCallback((id: PortfolioVersionId) => {
-    setStoredVersion(id);
-    setVersionState(id);
+  const refreshVersions = useCallback(() => {
+    setVersions(getVersionsMeta());
+    setActiveVersionId(getActiveVersionId());
   }, []);
 
+  const handleSetActive = useCallback((id: PortfolioVersionId) => {
+    setActiveVersion(id);
+    refreshVersions();
+  }, [refreshVersions]);
+
+  const handleCreate = useCallback((label: string, icon: string, description: string) => {
+    const v = createVersion(label, icon, description);
+    refreshVersions();
+    return v;
+  }, [refreshVersions]);
+
+  const handleDelete = useCallback((id: PortfolioVersionId) => {
+    deleteVersion(id);
+    refreshVersions();
+  }, [refreshVersions]);
+
+  const handleUpdateMeta = useCallback((id: PortfolioVersionId, updates: Partial<Pick<PortfolioVersionMeta, "label" | "icon" | "description">>) => {
+    updateVersionMeta(id, updates);
+    refreshVersions();
+  }, [refreshVersions]);
+
+  const handleSaveData = useCallback((id: PortfolioVersionId, data: PortfolioData) => {
+    saveVersionData(id, data);
+    refreshVersions();
+  }, [refreshVersions]);
+
   return (
-    <VersionContext.Provider value={{ version, setVersion, versions: PORTFOLIO_VERSIONS }}>
+    <VersionContext.Provider value={{
+      activeVersionId,
+      versions,
+      refreshVersions,
+      setActive: handleSetActive,
+      getVersionData,
+      saveVersionData: handleSaveData,
+      createVersion: handleCreate,
+      deleteVersion: handleDelete,
+      updateVersionMeta: handleUpdateMeta,
+    }}>
       {children}
     </VersionContext.Provider>
   );
