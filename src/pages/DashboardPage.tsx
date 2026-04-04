@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { LogOut, Trash2, Plus, Undo2, RotateCcw, Save, Palette, Check, Calendar as CalendarIcon, Image, Video, Eye, FileText, AlertTriangle, ArrowUp, ArrowDown, GripVertical, Settings2, EyeOff, Type, Target, Search } from "lucide-react";
+import { LogOut, Trash2, Plus, Undo2, RotateCcw, Save, Palette, Check, Calendar as CalendarIcon, Image, Video, Eye, FileText, AlertTriangle, ArrowUp, ArrowDown, GripVertical, Settings2, EyeOff, Type, Target, Search, Layers, Star, Pencil } from "lucide-react";
 import ResumePreview from "@/components/ResumePreview";
 import ATSScoreCard from "@/components/ATSScoreCard";
 import { themeOptions, getSavedTheme, saveTheme, type ThemeOption } from "@/lib/themeManager";
