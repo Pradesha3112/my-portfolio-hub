@@ -794,6 +794,9 @@ export default function DashboardPage() {
             </Button>
           </div>
         )}
+
+        {/* Versions Management */}
+        {activeTab === "versions" && <VersionsManager />}
       </div>
     </main>
   );
