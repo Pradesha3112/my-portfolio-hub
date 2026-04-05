@@ -37,6 +37,14 @@ export function PortfolioVersionProvider({ children }: { children: ReactNode }) 
   const [versions, setVersions] = useState<PortfolioVersionMeta[]>(getVersionsMeta);
   const [activeVersionId, setActiveVersionId] = useState<PortfolioVersionId>(getActiveVersionId);
 
+  // Apply active version's theme on mount
+  useEffect(() => {
+    const theme = getActiveVersionTheme();
+    if (theme) {
+      applyTheme(theme as ThemeOption);
+    }
+  }, []);
+
   const refreshVersions = useCallback(() => {
     setVersions(getVersionsMeta());
     setActiveVersionId(getActiveVersionId());
