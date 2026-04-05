@@ -133,6 +133,27 @@ export function getActivePortfolioData(): PortfolioData {
   return getVersionData(activeId);
 }
 
+// ---- Get active version's theme ----
+
+export function getActiveVersionTheme(): string | undefined {
+  const meta = getVersionsMeta();
+  const active = meta.find((v) => v.isActive);
+  return active?.theme;
+}
+
+export function getVersionTheme(id: PortfolioVersionId): string | undefined {
+  const meta = getVersionsMeta();
+  const v = meta.find((m) => m.id === id);
+  return v?.theme;
+}
+
+export function setVersionTheme(id: PortfolioVersionId, theme: string) {
+  const meta = getVersionsMeta().map((v) =>
+    v.id === id ? { ...v, theme, updatedAt: new Date().toISOString() } : v
+  );
+  saveVersionsMeta(meta);
+}
+
 // ---- CRUD for versions ----
 
 export function createVersion(label: string, icon: string, description: string): PortfolioVersionMeta {
