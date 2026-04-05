@@ -12,6 +12,7 @@ export interface PortfolioVersionMeta {
   icon: string;
   description: string;
   isActive: boolean;
+  theme?: string; // ThemeOption stored per version
   createdAt: string;
   updatedAt: string;
 }
@@ -130,6 +131,27 @@ export function saveVersionData(id: PortfolioVersionId, data: PortfolioData) {
 export function getActivePortfolioData(): PortfolioData {
   const activeId = getActiveVersionId();
   return getVersionData(activeId);
+}
+
+// ---- Get active version's theme ----
+
+export function getActiveVersionTheme(): string | undefined {
+  const meta = getVersionsMeta();
+  const active = meta.find((v) => v.isActive);
+  return active?.theme;
+}
+
+export function getVersionTheme(id: PortfolioVersionId): string | undefined {
+  const meta = getVersionsMeta();
+  const v = meta.find((m) => m.id === id);
+  return v?.theme;
+}
+
+export function setVersionTheme(id: PortfolioVersionId, theme: string) {
+  const meta = getVersionsMeta().map((v) =>
+    v.id === id ? { ...v, theme, updatedAt: new Date().toISOString() } : v
+  );
+  saveVersionsMeta(meta);
 }
 
 // ---- CRUD for versions ----

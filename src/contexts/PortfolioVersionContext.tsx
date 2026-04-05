@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import {
   type PortfolioVersionId,
   type PortfolioVersionMeta,
@@ -10,13 +10,15 @@ import {
   createVersion,
   deleteVersion,
   updateVersionMeta,
+  getVersionTheme,
+  setVersionTheme,
+  getActiveVersionTheme,
 } from "@/lib/portfolioVersions";
 import type { PortfolioData } from "@/lib/portfolioData";
+import { applyTheme, type ThemeOption } from "@/lib/themeManager";
 
 interface VersionContextValue {
-  // For public: the active version's data
   activeVersionId: PortfolioVersionId;
-  // For admin: full version management
   versions: PortfolioVersionMeta[];
   refreshVersions: () => void;
   setActive: (id: PortfolioVersionId) => void;
@@ -25,6 +27,8 @@ interface VersionContextValue {
   createVersion: (label: string, icon: string, description: string) => PortfolioVersionMeta;
   deleteVersion: (id: PortfolioVersionId) => void;
   updateVersionMeta: (id: PortfolioVersionId, updates: Partial<Pick<PortfolioVersionMeta, "label" | "icon" | "description">>) => void;
+  getVersionTheme: (id: PortfolioVersionId) => string | undefined;
+  setVersionTheme: (id: PortfolioVersionId, theme: string) => void;
 }
 
 const VersionContext = createContext<VersionContextValue | null>(null);
@@ -33,6 +37,14 @@ export function PortfolioVersionProvider({ children }: { children: ReactNode }) 
   const [versions, setVersions] = useState<PortfolioVersionMeta[]>(getVersionsMeta);
   const [activeVersionId, setActiveVersionId] = useState<PortfolioVersionId>(getActiveVersionId);
 
+  // Apply active version's theme on mount
+  useEffect(() => {
+    const theme = getActiveVersionTheme();
+    if (theme) {
+      applyTheme(theme as ThemeOption);
+    }
+  }, []);
+
   const refreshVersions = useCallback(() => {
     setVersions(getVersionsMeta());
     setActiveVersionId(getActiveVersionId());
@@ -40,6 +52,11 @@ export function PortfolioVersionProvider({ children }: { children: ReactNode }) 
 
   const handleSetActive = useCallback((id: PortfolioVersionId) => {
     setActiveVersion(id);
+    // Apply the version's theme when setting active
+    const theme = getVersionTheme(id);
+    if (theme) {
+      applyTheme(theme as ThemeOption);
+    }
     refreshVersions();
   }, [refreshVersions]);
 
@@ -64,6 +81,15 @@ export function PortfolioVersionProvider({ children }: { children: ReactNode }) 
     refreshVersions();
   }, [refreshVersions]);
 
+  const handleSetVersionTheme = useCallback((id: PortfolioVersionId, theme: string) => {
+    setVersionTheme(id, theme);
+    refreshVersions();
+  }, [refreshVersions]);
+
+  const handleGetVersionTheme = useCallback((id: PortfolioVersionId) => {
+    return getVersionTheme(id);
+  }, []);
+
   return (
     <VersionContext.Provider value={{
       activeVersionId,
@@ -75,6 +101,8 @@ export function PortfolioVersionProvider({ children }: { children: ReactNode }) 
       createVersion: handleCreate,
       deleteVersion: handleDelete,
       updateVersionMeta: handleUpdateMeta,
+      getVersionTheme: handleGetVersionTheme,
+      setVersionTheme: handleSetVersionTheme,
     }}>
       {children}
     </VersionContext.Provider>

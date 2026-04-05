@@ -1301,9 +1301,10 @@ function VersionsManager() {
 
 // ============ Per-Version Data Editor ============
 function VersionDataEditor({ versionId }: { versionId: string }) {
-  const { getVersionData: getVerData, saveVersionData: saveVerData } = usePortfolioVersion();
+  const { getVersionData: getVerData, saveVersionData: saveVerData, getVersionTheme: getVerTheme, setVersionTheme: setVerTheme } = usePortfolioVersion();
   const [data, setData] = useState(() => getVerData(versionId));
   const [activeSection, setActiveSection] = useState("profile");
+  const [versionTheme, setLocalTheme] = useState<ThemeOption>(() => (getVerTheme(versionId) as ThemeOption) || "light");
 
   const sections = [
     { id: "profile", label: "👤 Profile" },
@@ -1313,12 +1314,22 @@ function VersionDataEditor({ versionId }: { versionId: string }) {
     { id: "certifications", label: "📜 Certifications" },
     { id: "skills", label: "🛠 Skills" },
     { id: "achievements", label: "🏆 Achievements" },
+    { id: "resume", label: "📄 Resume" },
+    { id: "format", label: "📝 Format" },
+    { id: "theme", label: "🎨 Theme" },
   ];
 
   const handleSave = () => {
     saveVerData(versionId, data);
     toast.success("Version data saved!");
   };
+
+  const handleSaveTheme = () => {
+    setVerTheme(versionId, versionTheme);
+    toast.success("Version theme saved!");
+  };
+
+  const resumeItems = getResumeItems(data);
 
   return (
     <div className="mt-4 border-t border-border pt-4 space-y-4">
@@ -1451,6 +1462,388 @@ function VersionDataEditor({ versionId }: { versionId: string }) {
           ))}
           <Button variant="outline" size="sm" onClick={() => setData({ ...data, achievements: [...data.achievements, ""] })}>
             <Plus className="h-3 w-3 mr-1" /> Add Achievement
+          </Button>
+        </div>
+      )}
+
+      {/* Resume Selections */}
+      {activeSection === "resume" && (
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">Select items for this version's resume.</p>
+
+          {/* Skill Categories */}
+          <div className="rounded border border-border p-3">
+            <h4 className="font-semibold text-sm text-foreground mb-2">Skill Categories</h4>
+            <div className="flex flex-wrap gap-3">
+              {(["languages", "tools", "platforms", "other"] as const).map((cat) => (
+                <label key={cat} className="flex items-center gap-2 text-sm capitalize">
+                  <Checkbox
+                    checked={data.resumeSelections.selectedSkillCategories.includes(cat)}
+                    onCheckedChange={(checked) => {
+                      const current = data.resumeSelections.selectedSkillCategories;
+                      const next = checked ? [...current, cat] : current.filter((c) => c !== cat);
+                      setData({ ...data, resumeSelections: { ...data.resumeSelections, selectedSkillCategories: next } });
+                    }}
+                  />
+                  {cat}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Projects (max 3) */}
+          <div className="rounded border border-border p-3">
+            <h4 className="font-semibold text-sm text-foreground mb-2">Projects <span className="text-xs text-muted-foreground">(max 3)</span></h4>
+            <div className="space-y-1">
+              {data.projects.map((p) => (
+                <label key={p.id} className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={data.resumeSelections.selectedProjects.includes(p.id)}
+                    disabled={!data.resumeSelections.selectedProjects.includes(p.id) && data.resumeSelections.selectedProjects.length >= 3}
+                    onCheckedChange={(checked) => {
+                      const current = data.resumeSelections.selectedProjects;
+                      const next = checked ? [...current, p.id] : current.filter((id) => id !== p.id);
+                      setData({ ...data, resumeSelections: { ...data.resumeSelections, selectedProjects: next } });
+                    }}
+                  />
+                  {p.title} {p.featured && "★"}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Internships (max 2) */}
+          <div className="rounded border border-border p-3">
+            <h4 className="font-semibold text-sm text-foreground mb-2">Internships <span className="text-xs text-muted-foreground">(max 2)</span></h4>
+            <div className="space-y-1">
+              {data.internships.map((item) => (
+                <label key={item.id} className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={data.resumeSelections.selectedInternships.includes(item.id)}
+                    disabled={!data.resumeSelections.selectedInternships.includes(item.id) && data.resumeSelections.selectedInternships.length >= 2}
+                    onCheckedChange={(checked) => {
+                      const current = data.resumeSelections.selectedInternships;
+                      const next = checked ? [...current, item.id] : current.filter((id) => id !== item.id);
+                      setData({ ...data, resumeSelections: { ...data.resumeSelections, selectedInternships: next } });
+                    }}
+                  />
+                  {item.role} — {item.organization}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Certifications (max 4) */}
+          <div className="rounded border border-border p-3">
+            <h4 className="font-semibold text-sm text-foreground mb-2">Certifications <span className="text-xs text-muted-foreground">(max 4)</span></h4>
+            <div className="space-y-1">
+              {data.certifications.map((c) => (
+                <label key={c.id} className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={data.resumeSelections.selectedCertifications.includes(c.id)}
+                    disabled={!data.resumeSelections.selectedCertifications.includes(c.id) && data.resumeSelections.selectedCertifications.length >= 4}
+                    onCheckedChange={(checked) => {
+                      const current = data.resumeSelections.selectedCertifications;
+                      const next = checked ? [...current, c.id] : current.filter((id) => id !== c.id);
+                      setData({ ...data, resumeSelections: { ...data.resumeSelections, selectedCertifications: next } });
+                    }}
+                  />
+                  {c.title} — {c.platform}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Section Order */}
+          <div className="rounded border border-border p-3">
+            <h4 className="font-semibold text-sm text-foreground mb-2">Section Order</h4>
+            <div className="space-y-1">
+              {(data.resumeSelections.sectionOrder || DEFAULT_SECTION_ORDER).map((sectionId, index, arr) => {
+                const sectionLabels: Record<ResumeSectionId, string> = {
+                  summary: "Professional Summary", skills: "Skills", projects: "Projects",
+                  experience: "Internship / Experience", certifications: "Certifications",
+                  education: "Education", achievements: "Achievements",
+                };
+                return (
+                  <div key={sectionId} className="flex items-center gap-2 rounded-md border border-border bg-background px-2 py-1.5">
+                    <span className="text-xs text-foreground flex-1">{index + 1}. {sectionLabels[sectionId]}</span>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0" disabled={index === 0}
+                      onClick={() => {
+                        const order = [...(data.resumeSelections.sectionOrder || DEFAULT_SECTION_ORDER)];
+                        [order[index - 1], order[index]] = [order[index], order[index - 1]];
+                        setData({ ...data, resumeSelections: { ...data.resumeSelections, sectionOrder: order } });
+                      }}>
+                      <ArrowUp className="h-3 w-3" />
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0" disabled={index === arr.length - 1}
+                      onClick={() => {
+                        const order = [...(data.resumeSelections.sectionOrder || DEFAULT_SECTION_ORDER)];
+                        [order[index], order[index + 1]] = [order[index + 1], order[index]];
+                        setData({ ...data, resumeSelections: { ...data.resumeSelections, sectionOrder: order } });
+                      }}>
+                      <ArrowDown className="h-3 w-3" />
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Preview summary */}
+          <div className="rounded border-2 border-primary/30 bg-primary/5 p-3">
+            <h4 className="font-semibold text-sm text-foreground mb-2">Resume Preview Summary</h4>
+            <div className="grid gap-2 sm:grid-cols-2 text-xs text-foreground">
+              <div>
+                <p className="font-medium">Projects ({resumeItems.projects.length}/3):</p>
+                <ul className="ml-3 text-muted-foreground">{resumeItems.projects.map((p) => <li key={p.id}>• {p.title}</li>)}</ul>
+              </div>
+              <div>
+                <p className="font-medium">Internships ({resumeItems.internships.length}/2):</p>
+                <ul className="ml-3 text-muted-foreground">{resumeItems.internships.map((i) => <li key={i.id}>• {i.role}</li>)}</ul>
+              </div>
+              <div>
+                <p className="font-medium">Certificates ({resumeItems.certifications.length}/4):</p>
+                <ul className="ml-3 text-muted-foreground">{resumeItems.certifications.map((c) => <li key={c.id}>• {c.title}</li>)}</ul>
+              </div>
+              <div>
+                <p className="font-medium">Skill Categories:</p>
+                <p className="ml-3 text-muted-foreground capitalize">{resumeItems.skillCategories.join(", ")}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Resume Format */}
+      {activeSection === "format" && (
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">Customize this version's resume formatting.</p>
+
+          {/* Template Selector */}
+          <div className="rounded border border-border p-3 space-y-2">
+            <h4 className="font-semibold text-sm text-foreground">Resume Template</h4>
+            <div className="grid gap-2">
+              {RESUME_TEMPLATES.map((tpl) => {
+                const currentTemplate = data.resumeFormatting?.templateId ?? "classic";
+                const isActive = currentTemplate === tpl.id;
+                return (
+                  <button
+                    key={tpl.id}
+                    onClick={() => {
+                      setData({
+                        ...data,
+                        resumeFormatting: {
+                          ...DEFAULT_FORMATTING,
+                          ...data.resumeFormatting,
+                          ...tpl.formatting,
+                          hiddenSections: data.resumeFormatting?.hiddenSections ?? [],
+                        },
+                      });
+                      toast.success(`Template applied: ${tpl.name}`);
+                    }}
+                    className={`flex items-start gap-2 rounded-lg border p-2 text-left transition-all ${
+                      isActive ? "border-primary bg-primary/10 ring-1 ring-primary" : "border-border bg-background hover:border-primary/50"
+                    }`}
+                  >
+                    <div className="flex items-center justify-center w-6 h-6 rounded shrink-0" style={{ backgroundColor: tpl.formatting.headingColor || "#000" }}>
+                      <FileText className="h-3 w-3 text-white" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1">
+                        <span className="font-medium text-xs text-foreground">{tpl.name}</span>
+                        {isActive && <Check className="h-3 w-3 text-primary" />}
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-snug">{tpl.description}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Font Family */}
+          <div className="rounded border border-border p-3 space-y-2">
+            <h4 className="font-semibold text-sm text-foreground">Font Family</h4>
+            <Select
+              value={data.resumeFormatting?.fontFamily ?? DEFAULT_FORMATTING.fontFamily}
+              onValueChange={(v) => setData({ ...data, resumeFormatting: { ...DEFAULT_FORMATTING, ...data.resumeFormatting, fontFamily: v as ResumeFontFamily } })}
+            >
+              <SelectTrigger className="w-full h-8"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {(["Helvetica", "Times", "Courier", "Georgia", "Garamond"] as ResumeFontFamily[]).map((f) => (
+                  <SelectItem key={f} value={f}>{f}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Font Sizes */}
+          <div className="rounded border border-border p-3 space-y-3">
+            <h4 className="font-semibold text-sm text-foreground">Font Sizes (pt)</h4>
+            {([
+              { key: "nameFontSize" as const, label: "Name", min: 12, max: 24 },
+              { key: "headingFontSize" as const, label: "Headings", min: 9, max: 16 },
+              { key: "bodyFontSize" as const, label: "Body", min: 8, max: 14 },
+              { key: "contactFontSize" as const, label: "Contact", min: 7, max: 12 },
+            ]).map(({ key, label, min, max }) => (
+              <div key={key} className="space-y-1">
+                <div className="flex justify-between text-xs">
+                  <Label className="text-xs">{label}</Label>
+                  <span className="text-muted-foreground font-mono">{data.resumeFormatting?.[key] ?? DEFAULT_FORMATTING[key]}pt</span>
+                </div>
+                <Slider min={min} max={max} step={0.5}
+                  value={[data.resumeFormatting?.[key] ?? DEFAULT_FORMATTING[key]]}
+                  onValueChange={([v]) => setData({ ...data, resumeFormatting: { ...DEFAULT_FORMATTING, ...data.resumeFormatting, [key]: v } })}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Font Styles */}
+          <div className="rounded border border-border p-3 space-y-3">
+            <h4 className="font-semibold text-sm text-foreground">Font Styles</h4>
+            {([
+              { key: "nameStyle" as const, label: "Name" },
+              { key: "headingStyle" as const, label: "Heading" },
+              { key: "bodyStyle" as const, label: "Body" },
+            ]).map(({ key, label }) => (
+              <div key={key} className="flex items-center justify-between">
+                <Label className="text-xs">{label}</Label>
+                <Select
+                  value={data.resumeFormatting?.[key] ?? DEFAULT_FORMATTING[key]}
+                  onValueChange={(v) => setData({ ...data, resumeFormatting: { ...DEFAULT_FORMATTING, ...data.resumeFormatting, [key]: v } })}
+                >
+                  <SelectTrigger className="w-28 h-7 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="normal">Normal</SelectItem>
+                    <SelectItem value="bold">Bold</SelectItem>
+                    <SelectItem value="italic">Italic</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            ))}
+          </div>
+
+          {/* Colors */}
+          <div className="rounded border border-border p-3 space-y-3">
+            <h4 className="font-semibold text-sm text-foreground">Resume Colors</h4>
+            {([
+              { key: "nameColor" as const, label: "Name" },
+              { key: "headingColor" as const, label: "Headings" },
+              { key: "bodyColor" as const, label: "Body" },
+              { key: "accentColor" as const, label: "Accent" },
+              { key: "linkColor" as const, label: "Links" },
+            ]).map(({ key, label }) => (
+              <div key={key} className="flex items-center gap-2">
+                <Label className="text-xs w-16">{label}</Label>
+                <input type="color" value={data.resumeFormatting?.[key] ?? DEFAULT_FORMATTING[key]}
+                  onChange={(e) => setData({ ...data, resumeFormatting: { ...DEFAULT_FORMATTING, ...data.resumeFormatting, [key]: e.target.value } })}
+                  className="w-7 h-7 rounded border border-border cursor-pointer"
+                />
+                <span className="text-xs text-muted-foreground font-mono">{data.resumeFormatting?.[key] ?? DEFAULT_FORMATTING[key]}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Spacing */}
+          <div className="rounded border border-border p-3 space-y-3">
+            <h4 className="font-semibold text-sm text-foreground">Spacing</h4>
+            {([
+              { key: "marginMM" as const, label: "Margins (mm)", min: 10, max: 35, step: 1 },
+              { key: "sectionGapBefore" as const, label: "Gap Before Heading", min: 2, max: 15, step: 0.5 },
+              { key: "sectionGapAfter" as const, label: "Gap After Heading", min: 2, max: 10, step: 0.5 },
+              { key: "itemSpacing" as const, label: "Entry Gap", min: 0, max: 8, step: 0.5 },
+              { key: "lineHeightMultiplier" as const, label: "Line Height", min: 1, max: 2, step: 0.1 },
+            ]).map(({ key, label, min, max, step }) => (
+              <div key={key} className="space-y-1">
+                <div className="flex justify-between text-xs">
+                  <Label className="text-xs">{label}</Label>
+                  <span className="text-muted-foreground font-mono">{data.resumeFormatting?.[key] ?? DEFAULT_FORMATTING[key]}</span>
+                </div>
+                <Slider min={min} max={max} step={step}
+                  value={[data.resumeFormatting?.[key] ?? DEFAULT_FORMATTING[key]]}
+                  onValueChange={([v]) => setData({ ...data, resumeFormatting: { ...DEFAULT_FORMATTING, ...data.resumeFormatting, [key]: v } })}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Section Options */}
+          <div className="rounded border border-border p-3 space-y-3">
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={data.resumeFormatting?.showSectionLines ?? DEFAULT_FORMATTING.showSectionLines}
+                onCheckedChange={(v) => setData({ ...data, resumeFormatting: { ...DEFAULT_FORMATTING, ...data.resumeFormatting, showSectionLines: v } })}
+              />
+              <Label className="text-xs">Show section dividers</Label>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-foreground mb-1">Hide Sections</p>
+              <div className="space-y-1">
+                {(["summary", "skills", "projects", "experience", "certifications", "education", "achievements"] as ResumeSectionId[]).map((sec) => {
+                  const labels: Record<ResumeSectionId, string> = {
+                    summary: "Summary", skills: "Skills", projects: "Projects",
+                    experience: "Experience", certifications: "Certifications",
+                    education: "Education", achievements: "Achievements",
+                  };
+                  const hidden = data.resumeFormatting?.hiddenSections ?? [];
+                  return (
+                    <label key={sec} className="flex items-center gap-2 text-xs">
+                      <Checkbox
+                        checked={hidden.includes(sec)}
+                        onCheckedChange={(checked) => {
+                          const next = checked ? [...hidden, sec] : hidden.filter((s) => s !== sec);
+                          setData({ ...data, resumeFormatting: { ...DEFAULT_FORMATTING, ...data.resumeFormatting, hiddenSections: next } });
+                        }}
+                      />
+                      {labels[sec]}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Live Preview */}
+          <div className="rounded border border-border overflow-hidden">
+            <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 border-b border-border">
+              <Eye className="h-3 w-3 text-muted-foreground" />
+              <span className="text-xs font-medium text-muted-foreground">Live Preview</span>
+            </div>
+            <div style={{ transform: "scale(0.6)", transformOrigin: "top left", width: "166.67%", maxHeight: "400px", overflow: "hidden" }}>
+              <ResumePreview data={data} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Theme per version */}
+      {activeSection === "theme" && (
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">Select a theme for this version. When this version is set as live, this theme will be applied globally.</p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {themeOptions.map((t) => (
+              <button
+                key={t.value}
+                onClick={() => setLocalTheme(t.value)}
+                className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-all ${
+                  versionTheme === t.value
+                    ? "border-primary bg-primary/10 ring-1 ring-primary"
+                    : "border-border bg-card hover:border-primary/50"
+                }`}
+              >
+                <div className={`flex h-8 w-8 items-center justify-center rounded-full flex-shrink-0 ${t.preview}`}>
+                  {versionTheme === t.value && <Check className="h-4 w-4" />}
+                </div>
+                <div>
+                  <p className="font-medium text-sm text-card-foreground">{t.label}</p>
+                  <p className="text-xs text-muted-foreground">{t.description}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+          <Button onClick={handleSaveTheme} size="sm" className="gap-1">
+            <Save className="h-4 w-4" /> Save Theme
           </Button>
         </div>
       )}
