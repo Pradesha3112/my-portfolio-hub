@@ -12,6 +12,7 @@ export interface PortfolioVersionMeta {
   icon: string;
   description: string;
   isActive: boolean;
+  theme?: string; // ThemeOption stored per version
   createdAt: string;
   updatedAt: string;
 }
