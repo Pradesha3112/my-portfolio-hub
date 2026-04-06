@@ -4,6 +4,8 @@ import {
   type PortfolioVersionMeta,
   getVersionsMeta,
   getActiveVersionId,
+  getCurrentVersionId,
+  setCurrentVersion,
   setActiveVersion,
   getVersionData,
   saveVersionData,
@@ -19,8 +21,10 @@ import { applyTheme, type ThemeOption } from "@/lib/themeManager";
 
 interface VersionContextValue {
   activeVersionId: PortfolioVersionId;
+  currentVersionId: PortfolioVersionId;
   versions: PortfolioVersionMeta[];
   refreshVersions: () => void;
+  setCurrent: (id: PortfolioVersionId) => void;
   setActive: (id: PortfolioVersionId) => void;
   getVersionData: (id: PortfolioVersionId) => PortfolioData;
   saveVersionData: (id: PortfolioVersionId, data: PortfolioData) => void;
@@ -36,27 +40,33 @@ const VersionContext = createContext<VersionContextValue | null>(null);
 export function PortfolioVersionProvider({ children }: { children: ReactNode }) {
   const [versions, setVersions] = useState<PortfolioVersionMeta[]>(getVersionsMeta);
   const [activeVersionId, setActiveVersionId] = useState<PortfolioVersionId>(getActiveVersionId);
+  const [currentVersionId, setCurrentVersionId] = useState<PortfolioVersionId>(getCurrentVersionId);
 
   // Apply active version's theme on mount
   useEffect(() => {
-    const theme = getActiveVersionTheme();
-    if (theme) {
-      applyTheme(theme as ThemeOption);
-    }
+    const theme = getVersionTheme(getCurrentVersionId()) ?? getActiveVersionTheme();
+    applyTheme((theme as ThemeOption) ?? "light");
   }, []);
 
   const refreshVersions = useCallback(() => {
     setVersions(getVersionsMeta());
     setActiveVersionId(getActiveVersionId());
+    setCurrentVersionId(getCurrentVersionId());
   }, []);
+
+  const handleSetCurrent = useCallback((id: PortfolioVersionId) => {
+    setCurrentVersion(id);
+    const theme = getVersionTheme(id);
+    applyTheme((theme as ThemeOption) ?? "light");
+    refreshVersions();
+  }, [refreshVersions]);
 
   const handleSetActive = useCallback((id: PortfolioVersionId) => {
     setActiveVersion(id);
+    setCurrentVersion(id);
     // Apply the version's theme when setting active
     const theme = getVersionTheme(id);
-    if (theme) {
-      applyTheme(theme as ThemeOption);
-    }
+    applyTheme((theme as ThemeOption) ?? "light");
     refreshVersions();
   }, [refreshVersions]);
 
@@ -83,8 +93,11 @@ export function PortfolioVersionProvider({ children }: { children: ReactNode }) 
 
   const handleSetVersionTheme = useCallback((id: PortfolioVersionId, theme: string) => {
     setVersionTheme(id, theme);
+    if (id === currentVersionId) {
+      applyTheme((theme as ThemeOption) ?? "light");
+    }
     refreshVersions();
-  }, [refreshVersions]);
+  }, [currentVersionId, refreshVersions]);
 
   const handleGetVersionTheme = useCallback((id: PortfolioVersionId) => {
     return getVersionTheme(id);
@@ -93,8 +106,10 @@ export function PortfolioVersionProvider({ children }: { children: ReactNode }) 
   return (
     <VersionContext.Provider value={{
       activeVersionId,
+      currentVersionId,
       versions,
       refreshVersions,
+      setCurrent: handleSetCurrent,
       setActive: handleSetActive,
       getVersionData,
       saveVersionData: handleSaveData,

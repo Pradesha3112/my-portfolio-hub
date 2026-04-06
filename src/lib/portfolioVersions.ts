@@ -20,6 +20,30 @@ export interface PortfolioVersionMeta {
 const VERSIONS_META_KEY = "portfolio_versions_meta";
 const VERSION_DATA_PREFIX = "portfolio_version_data_";
 const ACTIVE_VERSION_KEY = "portfolio_active_version";
+const CURRENT_VERSION_KEY = "portfolio_current_version";
+
+function clonePortfolioData(data: PortfolioData): PortfolioData {
+  return JSON.parse(JSON.stringify(data)) as PortfolioData;
+}
+
+function hydrateVersionData(data: PortfolioData): PortfolioData {
+  const baseData = getPortfolioData();
+  const hydrated = clonePortfolioData(data);
+
+  if (!hydrated.resumeSelections) {
+    hydrated.resumeSelections = clonePortfolioData(baseData).resumeSelections;
+  }
+
+  if (!hydrated.resumeSelections?.sectionOrder) {
+    hydrated.resumeSelections.sectionOrder = [...baseData.resumeSelections.sectionOrder];
+  }
+
+  if (!hydrated.resumeFormatting) {
+    hydrated.resumeFormatting = clonePortfolioData(baseData).resumeFormatting;
+  }
+
+  return hydrated;
+}
 
 // Default version definitions
 const DEFAULT_VERSIONS: PortfolioVersionMeta[] = [
@@ -88,6 +112,23 @@ export function setActiveVersion(id: PortfolioVersionId) {
   saveVersionsMeta(meta);
 }
 
+export function getCurrentVersionId(): PortfolioVersionId {
+  const stored = localStorage.getItem(CURRENT_VERSION_KEY);
+  const meta = getVersionsMeta();
+
+  if (stored && meta.some((v) => v.id === stored)) {
+    return stored;
+  }
+
+  const fallbackId = getActiveVersionId();
+  localStorage.setItem(CURRENT_VERSION_KEY, fallbackId);
+  return fallbackId;
+}
+
+export function setCurrentVersion(id: PortfolioVersionId) {
+  localStorage.setItem(CURRENT_VERSION_KEY, id);
+}
+
 // ---- Per-version data ----
 
 export function getVersionData(id: PortfolioVersionId): PortfolioData {
@@ -95,30 +136,20 @@ export function getVersionData(id: PortfolioVersionId): PortfolioData {
   const stored = localStorage.getItem(key);
   if (stored) {
     try {
-      const parsed = JSON.parse(stored);
-      // Ensure required fields
-      if (!parsed.resumeSelections) {
-        parsed.resumeSelections = getPortfolioData().resumeSelections;
-      }
-      if (!parsed.resumeSelections?.sectionOrder) {
-        parsed.resumeSelections.sectionOrder = getPortfolioData().resumeSelections.sectionOrder;
-      }
-      if (!parsed.resumeFormatting) {
-        parsed.resumeFormatting = getPortfolioData().resumeFormatting;
-      }
-      return parsed;
+      return hydrateVersionData(JSON.parse(stored));
     } catch {
       // fall through
     }
   }
   // If no version-specific data, clone base data
-  return { ...getPortfolioData() };
+  return hydrateVersionData(getPortfolioData());
 }
 
 export function saveVersionData(id: PortfolioVersionId, data: PortfolioData) {
   const key = VERSION_DATA_PREFIX + id;
-  data.lastEdited = new Date().toISOString();
-  localStorage.setItem(key, JSON.stringify(data));
+  const nextData = hydrateVersionData(data);
+  nextData.lastEdited = new Date().toISOString();
+  localStorage.setItem(key, JSON.stringify(nextData));
   // Update meta timestamp
   const meta = getVersionsMeta().map((v) =>
     v.id === id ? { ...v, updatedAt: new Date().toISOString() } : v
@@ -170,8 +201,8 @@ export function createVersion(label: string, icon: string, description: string):
   };
   meta.push(newVersion);
   saveVersionsMeta(meta);
-  // Initialize with a copy of current base data
-  saveVersionData(id, { ...getPortfolioData() });
+  // Initialize with a copy of the currently selected version data
+  saveVersionData(id, getVersionData(getCurrentVersionId()));
   return newVersion;
 }
 
@@ -183,6 +214,11 @@ export function deleteVersion(id: PortfolioVersionId) {
   }
   saveVersionsMeta(meta);
   localStorage.removeItem(VERSION_DATA_PREFIX + id);
+
+  if (localStorage.getItem(CURRENT_VERSION_KEY) === id) {
+    const fallbackId = meta.find((v) => v.isActive)?.id ?? meta[0]?.id ?? "python";
+    localStorage.setItem(CURRENT_VERSION_KEY, fallbackId);
+  }
 }
 
 export function updateVersionMeta(id: PortfolioVersionId, updates: Partial<Pick<PortfolioVersionMeta, "label" | "icon" | "description">>) {

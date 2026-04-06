@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { LogOut, Trash2, Plus, Undo2, RotateCcw, Save, Palette, Check, Calendar as CalendarIcon, Image, Video, Eye, FileText, AlertTriangle, ArrowUp, ArrowDown, GripVertical, Settings2, EyeOff, Type, Target, Search, Layers, Star, Pencil } from "lucide-react";
 import ResumePreview from "@/components/ResumePreview";
 import ATSScoreCard from "@/components/ATSScoreCard";
-import { themeOptions, getSavedTheme, saveTheme, type ThemeOption } from "@/lib/themeManager";
+import { themeOptions, type ThemeOption } from "@/lib/themeManager";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -27,10 +27,15 @@ import { generateResume } from "@/lib/resumeGenerator";
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { data, update, undo, reset } = usePortfolio();
+  const { currentVersionId, versions, getVersionTheme, setVersionTheme } = usePortfolioVersion();
   const [activeTab, setActiveTab] = useState("profile");
-  const [selectedTheme, setSelectedTheme] = useState<ThemeOption>(getSavedTheme());
+  const [selectedTheme, setSelectedTheme] = useState<ThemeOption>(() => (getVersionTheme(currentVersionId) as ThemeOption) || "light");
   const [jobDescription, setJobDescription] = useState("");
   const [showResetDialog, setShowResetDialog] = useState(false);
+
+  useEffect(() => {
+    setSelectedTheme((getVersionTheme(currentVersionId) as ThemeOption) || "light");
+  }, [currentVersionId, getVersionTheme]);
 
   useEffect(() => {
     if (!isAdmin()) navigate("/login");
@@ -53,8 +58,8 @@ export default function DashboardPage() {
   ];
 
   const handleSaveTheme = () => {
-    saveTheme(selectedTheme);
-    toast.success(`Theme saved: ${themeOptions.find(t => t.value === selectedTheme)?.label}`);
+    setVersionTheme(currentVersionId, selectedTheme);
+    toast.success(`Theme saved for ${versions.find((v) => v.id === currentVersionId)?.label ?? "current version"}`);
   };
 
   const handleReset = () => {
@@ -101,6 +106,7 @@ export default function DashboardPage() {
         </Dialog>
 
         <p className="text-xs text-muted-foreground mb-6">Last edited: {new Date(data.lastEdited).toLocaleString()}</p>
+        <p className="text-sm text-primary mb-6">Current Version: {versions.find((v) => v.id === currentVersionId)?.label ?? "Unknown"}</p>
 
         {/* Tabs */}
         <div className="flex flex-wrap gap-2 mb-8 border-b border-border pb-4">
@@ -766,7 +772,7 @@ export default function DashboardPage() {
               <h2 className="text-xl font-semibold text-foreground mb-1 flex items-center gap-2">
                 <Palette className="h-5 w-5" /> Theme Settings
               </h2>
-              <p className="text-sm text-muted-foreground mb-6">Select a theme for your portfolio. Applied globally and persists across sessions.</p>
+              <p className="text-sm text-muted-foreground mb-6">Select a theme for the currently selected version. Switching versions updates this instantly.</p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               {themeOptions.map((t) => (
@@ -1161,7 +1167,9 @@ function CertificationEditor({ items, onUpdate }: { items: Certification[]; onUp
 function VersionsManager() {
   const {
     activeVersionId,
+    currentVersionId,
     versions,
+    setCurrent,
     setActive,
     getVersionData: getVerData,
     saveVersionData: saveVerData,
@@ -1188,6 +1196,12 @@ function VersionsManager() {
     setActive(id);
     const v = versions.find((v) => v.id === id);
     toast.success(`"${v?.label}" is now the live portfolio`);
+  };
+
+  const handleSwitchVersion = (id: string) => {
+    setCurrent(id);
+    const v = versions.find((version) => version.id === id);
+    toast.success(`Switched dashboard to ${v?.label}`);
   };
 
   const handleDelete = (id: string) => {
@@ -1237,15 +1251,23 @@ function VersionsManager() {
                   </div>
                   <p className="text-sm text-muted-foreground mt-0.5">{v.description}</p>
                   <p className="text-xs text-muted-foreground mt-1">Updated: {new Date(v.updatedAt).toLocaleString()}</p>
+                  {currentVersionId === v.id && (
+                    <p className="text-xs text-primary mt-1 font-medium">Currently loaded in dashboard</p>
+                  )}
                 </div>
               </div>
               <div className="flex gap-2 flex-shrink-0">
+                {currentVersionId !== v.id && (
+                  <Button variant="outline" size="sm" onClick={() => handleSwitchVersion(v.id)} className="gap-1">
+                    <Layers className="h-3 w-3" /> Switch
+                  </Button>
+                )}
                 {!v.isActive && (
                   <Button size="sm" onClick={() => handleSetActive(v.id)} className="gap-1">
                     <Star className="h-3 w-3" /> Set as Live
                   </Button>
                 )}
-                <Button variant="outline" size="sm" onClick={() => setEditingVersion(editingVersion === v.id ? null : v.id)} className="gap-1">
+                <Button variant="outline" size="sm" onClick={() => { handleSwitchVersion(v.id); setEditingVersion(editingVersion === v.id ? null : v.id); }} className="gap-1">
                   <Pencil className="h-3 w-3" /> Edit
                 </Button>
                 {!v.isActive && (
