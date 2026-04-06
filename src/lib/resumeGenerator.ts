@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
-import { getPortfolioData, getResumeItems, DEFAULT_SECTION_ORDER, DEFAULT_FORMATTING, type ResumeSectionId, type ResumeFormatting } from "./portfolioData";
+import { getCurrentVersionId, getVersionData } from "./portfolioVersions";
+import { getResumeItems, DEFAULT_SECTION_ORDER, DEFAULT_FORMATTING, type PortfolioData, type ResumeSectionId, type ResumeFormatting } from "./portfolioData";
 
 function addLinkedText(doc: jsPDF, label: string, url: string, x: number, y: number, fontSize: number, linkRgb: [number, number, number] = [0, 80, 180]) {
   doc.setFontSize(fontSize);
@@ -22,8 +23,8 @@ const FONT_MAP: Record<string, string> = {
   Garamond: "times",    // closest jsPDF built-in
 };
 
-export async function generateResume(portfolioUrl?: string) {
-  const d = getPortfolioData();
+export async function generateResume(portfolioUrl?: string, sourceData?: PortfolioData) {
+  const d = sourceData ?? getVersionData(getCurrentVersionId());
   const fmt: ResumeFormatting = { ...DEFAULT_FORMATTING, ...d.resumeFormatting };
   const { projects, internships, certifications, skillCategories } = getResumeItems(d);
   const doc = new jsPDF();
