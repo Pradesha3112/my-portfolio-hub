@@ -45,9 +45,7 @@ export function PortfolioVersionProvider({ children }: { children: ReactNode }) 
   // Apply active version's theme on mount
   useEffect(() => {
     const theme = getVersionTheme(getCurrentVersionId()) ?? getActiveVersionTheme();
-    if (theme) {
-      applyTheme(theme as ThemeOption);
-    }
+    applyTheme((theme as ThemeOption) ?? "light");
   }, []);
 
   const refreshVersions = useCallback(() => {
@@ -59,9 +57,7 @@ export function PortfolioVersionProvider({ children }: { children: ReactNode }) 
   const handleSetCurrent = useCallback((id: PortfolioVersionId) => {
     setCurrentVersion(id);
     const theme = getVersionTheme(id);
-    if (theme) {
-      applyTheme(theme as ThemeOption);
-    }
+    applyTheme((theme as ThemeOption) ?? "light");
     refreshVersions();
   }, [refreshVersions]);
 
@@ -70,9 +66,7 @@ export function PortfolioVersionProvider({ children }: { children: ReactNode }) 
     setCurrentVersion(id);
     // Apply the version's theme when setting active
     const theme = getVersionTheme(id);
-    if (theme) {
-      applyTheme(theme as ThemeOption);
-    }
+    applyTheme((theme as ThemeOption) ?? "light");
     refreshVersions();
   }, [refreshVersions]);
 
@@ -99,8 +93,11 @@ export function PortfolioVersionProvider({ children }: { children: ReactNode }) 
 
   const handleSetVersionTheme = useCallback((id: PortfolioVersionId, theme: string) => {
     setVersionTheme(id, theme);
+    if (id === currentVersionId) {
+      applyTheme((theme as ThemeOption) ?? "light");
+    }
     refreshVersions();
-  }, [refreshVersions]);
+  }, [currentVersionId, refreshVersions]);
 
   const handleGetVersionTheme = useCallback((id: PortfolioVersionId) => {
     return getVersionTheme(id);
