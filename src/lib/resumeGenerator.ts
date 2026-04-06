@@ -328,7 +328,7 @@ async function loadImageAsDataURL(url: string): Promise<{ dataUrl: string; width
 
 // Generate a detailed project report PDF
 export async function generateProjectPDF(projectId: string) {
-  const d = getPortfolioData();
+  const d = getVersionData(getCurrentVersionId());
   const p = d.projects.find((proj) => proj.id === projectId);
   if (!p) return;
 
