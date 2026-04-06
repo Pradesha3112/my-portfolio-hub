@@ -1167,7 +1167,9 @@ function CertificationEditor({ items, onUpdate }: { items: Certification[]; onUp
 function VersionsManager() {
   const {
     activeVersionId,
+    currentVersionId,
     versions,
+    setCurrent,
     setActive,
     getVersionData: getVerData,
     saveVersionData: saveVerData,
@@ -1194,6 +1196,12 @@ function VersionsManager() {
     setActive(id);
     const v = versions.find((v) => v.id === id);
     toast.success(`"${v?.label}" is now the live portfolio`);
+  };
+
+  const handleSwitchVersion = (id: string) => {
+    setCurrent(id);
+    const v = versions.find((version) => version.id === id);
+    toast.success(`Switched dashboard to ${v?.label}`);
   };
 
   const handleDelete = (id: string) => {
@@ -1243,15 +1251,23 @@ function VersionsManager() {
                   </div>
                   <p className="text-sm text-muted-foreground mt-0.5">{v.description}</p>
                   <p className="text-xs text-muted-foreground mt-1">Updated: {new Date(v.updatedAt).toLocaleString()}</p>
+                  {currentVersionId === v.id && (
+                    <p className="text-xs text-primary mt-1 font-medium">Currently loaded in dashboard</p>
+                  )}
                 </div>
               </div>
               <div className="flex gap-2 flex-shrink-0">
+                {currentVersionId !== v.id && (
+                  <Button variant="outline" size="sm" onClick={() => handleSwitchVersion(v.id)} className="gap-1">
+                    <Layers className="h-3 w-3" /> Switch
+                  </Button>
+                )}
                 {!v.isActive && (
                   <Button size="sm" onClick={() => handleSetActive(v.id)} className="gap-1">
                     <Star className="h-3 w-3" /> Set as Live
                   </Button>
                 )}
-                <Button variant="outline" size="sm" onClick={() => setEditingVersion(editingVersion === v.id ? null : v.id)} className="gap-1">
+                <Button variant="outline" size="sm" onClick={() => { handleSwitchVersion(v.id); setEditingVersion(editingVersion === v.id ? null : v.id); }} className="gap-1">
                   <Pencil className="h-3 w-3" /> Edit
                 </Button>
                 {!v.isActive && (
